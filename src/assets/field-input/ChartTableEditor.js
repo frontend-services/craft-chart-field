@@ -638,8 +638,8 @@
             }, this));
 
             if (this._headers.length === 1) {
-                // No series yet — add a blank one
-                this._headers.push('');
+                // No series yet — add a blank one with a default name
+                this._headers.push('Series 1');
                 this._colors.push(this._color(0));
             }
 
