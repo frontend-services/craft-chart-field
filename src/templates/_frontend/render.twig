@@ -1,0 +1,13 @@
+{#
+  Default frontend render template for a ChartData model.
+  Called internally by ChartData::render().
+
+  Variables:
+    containerId  — unique DOM element ID
+    config       — library-specific config array
+    options      — width, height, class, etc.
+    renderer     — the ChartRendererInterface instance
+    jsAssets     — resolved CDN URLs (already registered with Craft's view)
+    licenseKey   — license key string or null
+#}
+{{ renderer.renderHtml(containerId, config, options, jsAssets, licenseKey) | raw }}

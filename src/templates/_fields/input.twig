@@ -1,0 +1,196 @@
+{% set chartTypeLabels = {
+    'line': 'Line', 'bar': 'Bar', 'column': 'Column', 'area': 'Area',
+    'pie': 'Pie', 'donut': 'Donut', 'doughnut': 'Doughnut',
+    'scatter': 'Scatter', 'radar': 'Radar', 'polar': 'Polar',
+    'polar-area': 'Polar Area', 'heatmap': 'Heatmap',
+    'stacked-bar': 'Stacked Bar', 'stacked-column': 'Stacked Column', 'stacked-area': 'Stacked Area',
+} %}
+
+{% set chartTypeIcons = {
+    'line':          '<svg viewBox="0 0 40 30" fill="none" stroke="currentColor" stroke-width="2"><polyline points="2,24 10,16 18,20 28,8 38,12"/></svg>',
+    'bar':           '<svg viewBox="0 0 40 30" fill="currentColor"><rect x="2" y="10" width="8" height="18"/><rect x="14" y="4" width="8" height="24"/><rect x="26" y="14" width="8" height="14"/></svg>',
+    'column':        '<svg viewBox="0 0 40 30" fill="currentColor"><rect x="2" y="12" width="8" height="16"/><rect x="14" y="4" width="8" height="24"/><rect x="26" y="16" width="8" height="12"/></svg>',
+    'area':          '<svg viewBox="0 0 40 30"><polygon points="2,24 10,16 18,20 28,8 38,12 38,28 2,28" fill="currentColor" fill-opacity="0.5"/><polyline points="2,24 10,16 18,20 28,8 38,12" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
+    'pie':           '<svg viewBox="0 0 40 30" fill="currentColor"><path d="M20,15 L20,3 A12,12 0 0,1 32,15 Z" fill="#4A90D9"/><path d="M20,15 L32,15 A12,12 0 0,1 14,26 Z" fill="#D94A4A"/><path d="M20,15 L14,26 A12,12 0 0,1 20,3 Z" fill="#50C878"/></svg>',
+    'donut':         '<svg viewBox="0 0 40 30"><circle cx="20" cy="15" r="12" fill="none" stroke="#4A90D9" stroke-width="6" stroke-dasharray="28 47"/><circle cx="20" cy="15" r="12" fill="none" stroke="#D94A4A" stroke-width="6" stroke-dasharray="20 55" stroke-dashoffset="-28"/><circle cx="20" cy="15" r="6" fill="white"/></svg>',
+    'doughnut':      '<svg viewBox="0 0 40 30"><circle cx="20" cy="15" r="12" fill="none" stroke="#4A90D9" stroke-width="6" stroke-dasharray="28 47"/><circle cx="20" cy="15" r="6" fill="white"/></svg>',
+    'scatter':       '<svg viewBox="0 0 40 30" fill="currentColor"><circle cx="8" cy="22" r="2.5"/><circle cx="16" cy="14" r="2.5"/><circle cx="24" cy="18" r="2.5"/><circle cx="30" cy="8" r="2.5"/><circle cx="36" cy="12" r="2.5"/><circle cx="12" cy="6" r="2.5"/></svg>',
+    'radar':         '<svg viewBox="0 0 40 30" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="20,2 35,13 29,27 11,27 5,13" stroke-opacity="0.3"/><polygon points="20,8 29,15 25,23 15,23 11,15" fill="#4A90D9" fill-opacity="0.3" stroke="#4A90D9"/></svg>',
+    'polar':         '<svg viewBox="0 0 40 30"><path d="M20,15 L20,4 A11,11 0 0,1 30,20 Z" fill="#4A90D9" fill-opacity="0.7"/><path d="M20,15 L30,20 A11,11 0 0,1 9,20 Z" fill="#D94A4A" fill-opacity="0.7"/><path d="M20,15 L9,20 A11,11 0 0,1 20,4 Z" fill="#50C878" fill-opacity="0.7"/></svg>',
+    'polar-area':    '<svg viewBox="0 0 40 30"><path d="M20,15 L20,4 A11,11 0 0,1 30,20 Z" fill="#4A90D9" fill-opacity="0.7"/><path d="M20,15 L30,20 A11,11 0 0,1 9,20 Z" fill="#D94A4A" fill-opacity="0.7"/><path d="M20,15 L9,20 A11,11 0 0,1 20,4 Z" fill="#50C878" fill-opacity="0.7"/></svg>',
+    'heatmap':       '<svg viewBox="0 0 40 30" fill="currentColor"><rect x="2" y="2" width="8" height="8" fill="#AED6F1"/><rect x="12" y="2" width="8" height="8" fill="#4A90D9"/><rect x="22" y="2" width="8" height="8" fill="#1A5276"/><rect x="2" y="12" width="8" height="8" fill="#4A90D9"/><rect x="12" y="12" width="8" height="8" fill="#AED6F1"/><rect x="22" y="12" width="8" height="8" fill="#4A90D9"/><rect x="2" y="22" width="8" height="8" fill="#1A5276"/><rect x="12" y="22" width="8" height="8" fill="#4A90D9"/><rect x="22" y="22" width="8" height="8" fill="#AED6F1"/></svg>',
+    'stacked-bar':   '<svg viewBox="0 0 40 30" fill="currentColor"><rect x="2" y="6" width="6" height="16" fill="#4A90D9"/><rect x="8" y="10" width="8" height="12" fill="#D94A4A"/><rect x="16" y="14" width="6" height="8" fill="#50C878"/><rect x="2" y="22" width="6" height="6" fill="#4A90D9"/></svg>',
+    'stacked-column':'<svg viewBox="0 0 40 30" fill="currentColor"><rect x="4" y="18" width="8" height="10" fill="#4A90D9"/><rect x="4" y="12" width="8" height="6" fill="#D94A4A"/><rect x="4" y="8" width="8" height="4" fill="#50C878"/><rect x="16" y="14" width="8" height="14" fill="#4A90D9"/><rect x="16" y="10" width="8" height="4" fill="#D94A4A"/><rect x="28" y="20" width="8" height="8" fill="#4A90D9"/><rect x="28" y="14" width="8" height="6" fill="#D94A4A"/></svg>',
+    'stacked-area':  '<svg viewBox="0 0 40 30"><polyline points="2,24 12,18 22,20 38,14" fill="none" stroke="#4A90D9" stroke-width="2"/><polygon points="2,28 12,22 22,24 38,18 38,28" fill="#D94A4A" fill-opacity="0.4"/></svg>',
+} %}
+
+{#
+  data-* attributes are NOT touched by Craft's namespaceInputs(),
+  so we use them exclusively for JS targeting.
+  name="{{ name }}" uses the raw field handle — Craft adds fields[] automatically.
+#}
+<div
+    class="chart-field-input"
+    data-chart-field
+    data-allow-custom-colors="{{ allowCustomColors ? '1' : '0' }}"
+    data-show-advanced="{{ showAdvancedOptions ? '1' : '0' }}"
+    data-default-palette="{{ defaultPalette | json_encode | e('html_attr') }}"
+    {% if showLivePreview %}
+    data-show-preview="1"
+    data-chart-library="{{ chartLibrary }}"
+    data-preview-js-assets="{{ previewJsAssets | json_encode | e('html_attr') }}"
+    {% if previewNoLicense %}data-preview-no-license="1"{% endif %}
+    {% endif %}
+>
+
+    {# Hidden input — name is the raw handle; Craft's namespaceInputs adds fields[] #}
+    <input
+        type="hidden"
+        class="js-chart-field-value"
+        name="{{ name }}"
+        value="{{ existingJson | e('html_attr') }}"
+    >
+
+    {# License key warning #}
+    {% if showLicenseWarning %}
+        <div class="chart-field-input__warning">
+            <span data-icon="alert" aria-hidden="true"></span>
+            {{ 'This field uses HighCharts which requires a commercial license. Charts will show a watermark until a license key is added in'|t('chart-field') }}
+            <a href="{{ cpUrl('settings/plugins/chart-field') }}">{{ 'plugin settings'|t('chart-field') }}</a>.
+        </div>
+    {% endif %}
+
+    {# === Panel 1: Chart Type === #}
+    <div class="chart-field-panel">
+        <h3 class="chart-field-panel__heading">{{ 'Chart Type'|t('chart-field') }}</h3>
+        <div class="chart-field-type-picker js-type-picker">
+            {% for type in allowedChartTypes %}
+                <button
+                    type="button"
+                    class="chart-field-type-picker__btn"
+                    data-type="{{ type }}"
+                    title="{{ chartTypeLabels[type] ?? type }}"
+                >
+                    <span class="chart-field-type-picker__icon">{{ (chartTypeIcons[type] ?? '') | raw }}</span>
+                    <span class="chart-field-type-picker__label">{{ chartTypeLabels[type] ?? type }}</span>
+                </button>
+            {% endfor %}
+        </div>
+    </div>
+
+    {# Title / Subtitle #}
+    <div class="chart-field-panel chart-field-panel--meta">
+        <div class="chart-field-axes-grid">
+            <div class="chart-field-field-row">
+                <label class="chart-field-label">{{ 'Title'|t('chart-field') }}</label>
+                <input type="text" class="text fullwidth" data-cf="title" placeholder="{{ 'Chart title (optional)'|t('chart-field') }}">
+            </div>
+            <div class="chart-field-field-row">
+                <label class="chart-field-label">{{ 'Subtitle'|t('chart-field') }}</label>
+                <input type="text" class="text fullwidth" data-cf="subtitle" placeholder="{{ 'Subtitle (optional)'|t('chart-field') }}">
+            </div>
+        </div>
+    </div>
+
+    {# === Panel 2: Axes === #}
+    <div class="chart-field-panel chart-field-panel--axes js-axes-panel">
+        <h3 class="chart-field-panel__heading">{{ 'Axes'|t('chart-field') }}</h3>
+        <div class="chart-field-axes-grid">
+            <div class="chart-field-axis-group">
+                <h4 class="chart-field-axis-group__title">{{ 'X Axis'|t('chart-field') }}</h4>
+                <div class="chart-field-field-row">
+                    <label class="chart-field-label">{{ 'Label'|t('chart-field') }}</label>
+                    <input type="text" class="text fullwidth" data-cf="xaxis-label" placeholder="{{ 'e.g. Month'|t('chart-field') }}">
+                </div>
+            </div>
+            <div class="chart-field-axis-group">
+                <h4 class="chart-field-axis-group__title">{{ 'Y Axis'|t('chart-field') }}</h4>
+                <div class="chart-field-field-row">
+                    <label class="chart-field-label">{{ 'Label'|t('chart-field') }}</label>
+                    <input type="text" class="text fullwidth" data-cf="yaxis-label" placeholder="{{ 'e.g. Revenue (€)'|t('chart-field') }}">
+                </div>
+                <div class="chart-field-field-row chart-field-field-row--inline">
+                    <div>
+                        <label class="chart-field-label">{{ 'Min'|t('chart-field') }}</label>
+                        <input type="number" class="text" data-cf="yaxis-min" style="width:80px;" placeholder="auto">
+                    </div>
+                    <div>
+                        <label class="chart-field-label">{{ 'Max'|t('chart-field') }}</label>
+                        <input type="number" class="text" data-cf="yaxis-max" style="width:80px;" placeholder="auto">
+                    </div>
+                    <div>
+                        <label class="chart-field-label">{{ 'Suffix'|t('chart-field') }}</label>
+                        <input type="text" class="text" data-cf="yaxis-suffix" style="width:80px;" placeholder="€">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# === Panel 3: Series Data === #}
+    <div class="chart-field-panel chart-field-panel--series">
+        <h3 class="chart-field-panel__heading">{{ 'Data'|t('chart-field') }}</h3>
+        <div class="js-chart-grid chart-field-grid-container"></div>
+    </div>
+
+
+    {# === Panel 4: Live Preview === #}
+    {% if showLivePreview %}
+        <div class="chart-field-panel chart-field-panel--preview">
+            <h3 class="chart-field-panel__heading">{{ 'Preview'|t('chart-field') }}</h3>
+            {% if previewNoLicense %}
+                <p class="chart-field-preview__notice">
+                    {{ 'Preview shown without license. Charts will show a watermark until a license key is added in'|t('chart-field') }}
+                    <a href="{{ cpUrl('settings/plugins/chart-field') }}">{{ 'plugin settings'|t('chart-field') }}</a>.
+                </p>
+            {% endif %}
+            <div class="js-preview-container chart-field-preview__container">
+                <p class="chart-field-preview__placeholder">{{ 'Select a chart type and add data to see a preview.'|t('chart-field') }}</p>
+            </div>
+        </div>
+    {% endif %}
+
+    {# === Panel 5: Advanced Options === #}
+    {% if showAdvancedOptions %}
+        <div class="chart-field-panel chart-field-panel--advanced">
+            <h3 class="chart-field-panel__heading">{{ 'Styling & Options'|t('chart-field') }}</h3>
+            <div class="chart-field-field-row chart-field-field-row--toggles">
+                <label class="chart-field-toggle">
+                    <input type="checkbox" data-cf="legend-enabled" checked>
+                    {{ 'Show legend'|t('chart-field') }}
+                </label>
+                <div class="select">
+                    <select data-cf="legend-position">
+                        <option value="bottom">{{ 'Bottom'|t('chart-field') }}</option>
+                        <option value="top">{{ 'Top'|t('chart-field') }}</option>
+                        <option value="left">{{ 'Left'|t('chart-field') }}</option>
+                        <option value="right">{{ 'Right'|t('chart-field') }}</option>
+                    </select>
+                </div>
+            </div>
+            <div class="chart-field-field-row chart-field-field-row--toggles">
+                <label class="chart-field-toggle">
+                    <input type="checkbox" data-cf="tooltip-enabled" checked>
+                    {{ 'Show tooltip'|t('chart-field') }}
+                </label>
+                <label class="chart-field-toggle">
+                    <input type="checkbox" data-cf="tooltip-shared">
+                    {{ 'Shared tooltip'|t('chart-field') }}
+                </label>
+            </div>
+            <hr style="margin:12px 0;border:none;border-top:1px solid var(--hairline-color,#e3e5e8);">
+            <div class="chart-field-field-row chart-field-field-row--inline">
+                <div>
+                    <label class="chart-field-label">{{ 'Value prefix'|t('chart-field') }}</label>
+                    <input type="text" class="text" data-cf="value-prefix" style="width:90px;" placeholder="{{ '$, £, …'|t('chart-field') }}">
+                </div>
+                <div>
+                    <label class="chart-field-label">{{ 'Value suffix'|t('chart-field') }}</label>
+                    <input type="text" class="text" data-cf="value-suffix" style="width:90px;" placeholder="{{ '€, %, kg, …'|t('chart-field') }}">
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+
+</div>

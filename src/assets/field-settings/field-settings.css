@@ -1,0 +1,135 @@
+/* Chart Field — Field Settings Styles */
+
+.chart-field-field-settings {
+    max-width: 600px;
+}
+
+.chart-field-field-settings h2 {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ui-control-color, #8f98a3);
+    margin: 24px 0 12px;
+}
+
+/* Allowed chart type checkboxes grid */
+.chart-field-type-checkboxes {
+    margin-bottom: 20px;
+}
+
+.chart-field-type-checkboxes__grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.chart-field-type-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border: 1px solid var(--ui-control-border-color, #e3e5e8);
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+    user-select: none;
+    transition: border-color 0.1s, background 0.1s;
+}
+
+.chart-field-type-checkbox:hover {
+    border-color: var(--link-color, #0d78f2);
+    background: rgba(13, 120, 242, 0.04);
+}
+
+.chart-field-type-checkbox input[type="checkbox"] {
+    margin: 0;
+}
+
+/* License row */
+.chart-field-settings__license-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.chart-field-settings__license-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.chart-field-settings__license-label {
+    min-width: 120px;
+    padding-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chart-field-settings__license-input {
+    flex: 1;
+    min-width: 250px;
+}
+
+.chart-field-settings__license-free {
+    color: var(--ui-control-color, #8f98a3);
+    font-size: 13px;
+    padding-top: 6px;
+}
+
+/* Badges */
+.chart-field-settings__badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.chart-field-settings__badge--success {
+    background: #e6f6ed;
+    color: #1a6b3c;
+}
+
+.chart-field-settings__badge--warning {
+    background: #fef6e4;
+    color: #7d5a0e;
+}
+
+/* CDN overrides */
+.chart-field-settings__cdn-overrides {
+    margin-top: 16px;
+    border: 1px solid var(--ui-control-border-color, #e3e5e8);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.chart-field-settings__cdn-overrides > summary {
+    padding: 10px 14px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    background: var(--gray-050, #f7f8f9);
+    user-select: none;
+}
+
+.chart-field-settings__cdn-overrides-content {
+    padding: 14px;
+}
+
+/* License warning (in field settings panel) */
+.chart-field-license-warning {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #fef6e4;
+    border: 1px solid #f0d27e;
+    border-radius: 5px;
+    font-size: 13px;
+    margin: 12px 0;
+    color: #7d5a0e;
+}

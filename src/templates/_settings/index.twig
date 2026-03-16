@@ -1,0 +1,68 @@
+{% import '_includes/forms' as forms %}
+
+<div class="chart-field-settings">
+
+    {# --- License Keys --- #}
+    <h2>{{ 'Library License Keys'|t('chart-field') }}</h2>
+
+    <div class="chart-field-settings__license-grid">
+        {% for renderer in renderers %}
+            {% if renderer.isCommercial() %}
+            <div class="chart-field-settings__license-row">
+
+                {% if renderer.isCommercial() %}
+                    <div class="chart-field-settings__license-input">
+                        {{ forms.autosuggestField({
+                            label: renderer.getName() ~ ' License Key'|t('chart-field'),
+                            id: 'licenseKeys-' ~ renderer.getHandle(),
+                            name: 'licenseKeys[' ~ renderer.getHandle() ~ ']',
+                            value: settings.licenseKeys[renderer.getHandle()] ?? '',
+                            suggestEnvVars: true,
+                            placeholder: '$' ~ (renderer.getHandle()|upper) ~ '_LICENSE_KEY',
+                            instructions: 'Supports environment variables. Leave empty if you do not use this library.'|t('chart-field'),
+                        }) }}
+                    </div>
+                {% else %}
+                    <div class="chart-field-settings__license-free">
+                        {{ 'No license key needed.'|t('chart-field') }}
+                    </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <hr>
+
+    {# --- JS Loading --- #}
+    <h2>{{ 'JavaScript Loading'|t('chart-field') }}</h2>
+
+    {{ forms.lightswitchField({
+        label: 'Auto-load JS from CDN'|t('chart-field'),
+        id: 'autoLoadJs',
+        name: 'autoLoadJs',
+        on: settings.autoLoadJs,
+        instructions: 'When enabled, the render() method automatically includes the charting library script tag. Disable if you manage script loading yourself.'|t('chart-field'),
+    }) }}
+
+    <details class="chart-field-settings__cdn-overrides">
+        <summary>{{ 'CDN URL Overrides (advanced)'|t('chart-field') }}</summary>
+        <div class="chart-field-settings__cdn-overrides-content">
+            <p class="light">
+                {{ 'Override the default CDN URL for any library. Useful for self-hosted copies, GDPR compliance, or pinned versions.'|t('chart-field') }}
+            </p>
+            {% for renderer in renderers %}
+                {{ forms.autosuggestField({
+                    label: renderer.getName() ~ ' CDN URL'|t('chart-field'),
+                    id: 'cdnOverrides-' ~ renderer.getHandle(),
+                    name: 'cdnOverrides[' ~ renderer.getHandle() ~ ']',
+                    value: settings.cdnOverrides[renderer.getHandle()] ?? '',
+                    suggestEnvVars: true,
+                    placeholder: renderer.getDefaultJsAssets()[0] ?? '',
+                    instructions: 'Leave empty to use the default CDN URL.'|t('chart-field'),
+                }) }}
+            {% endfor %}
+        </div>
+    </details>
+
+</div>

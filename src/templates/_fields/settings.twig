@@ -1,0 +1,114 @@
+{% import '_includes/forms' as forms %}
+
+{% set supportedTypesJson %}
+{
+    "chartjs": ["line", "bar", "column", "pie", "doughnut", "donut", "radar", "scatter", "polar-area", "stacked-bar", "stacked-column", "area"],
+    "highcharts": ["line", "bar", "column", "area", "pie", "donut", "scatter", "polar", "stacked-bar", "stacked-column", "stacked-area"],
+    "apexcharts": ["line", "bar", "column", "area", "pie", "donut", "scatter", "heatmap", "radar", "stacked-bar", "stacked-column", "stacked-area"]
+}
+{% endset %}
+
+{% set typeLabels %}
+{
+    "line": "Line",
+    "bar": "Bar (Horizontal)",
+    "column": "Column (Vertical)",
+    "area": "Area",
+    "pie": "Pie",
+    "donut": "Donut",
+    "doughnut": "Doughnut",
+    "scatter": "Scatter",
+    "radar": "Radar",
+    "polar": "Polar",
+    "polar-area": "Polar Area",
+    "heatmap": "Heatmap",
+    "stacked-bar": "Stacked Bar",
+    "stacked-column": "Stacked Column",
+    "stacked-area": "Stacked Area"
+}
+{% endset %}
+
+<div
+    class="chart-field-field-settings"
+    data-supported-types="{{ supportedTypesJson|trim }}"
+    data-type-labels="{{ typeLabels|trim }}"
+    data-commercial-libraries='["highcharts"]'
+    data-has-license-keys='{{ craft.app.plugins.getPlugin("chart-field").settings.licenseKeys | json_encode }}'
+>
+
+    {# --- Charting Library --- #}
+    {{ forms.selectField({
+        label: 'Charting Library'|t('chart-field'),
+        id: 'chartLibrary',
+        name: 'chartLibrary',
+        value: field.chartLibrary,
+        options: libraryOptions,
+        instructions: 'The charting library to use for this field. Content authors never see or choose the library.'|t('chart-field'),
+    }) }}
+
+    {# --- License key warning (commercial library, no key set) --- #}
+    {% if showLicenseWarning %}
+        <div class="chart-field-license-warning">
+            <span data-icon="alert" aria-hidden="true"></span>
+            {{ 'No license key configured for HighCharts. Add one in'|t('chart-field') }}
+            <a href="{{ cpUrl('settings/plugins/chart-field') }}">{{ 'Settings → Plugins → Chart Field'|t('chart-field') }}</a>.
+        </div>
+    {% endif %}
+
+    {# --- Allowed Chart Types --- #}
+    <div class="chart-field-type-checkboxes" id="allowedChartTypesWrapper">
+        <label class="field-label">{{ 'Allowed Chart Types'|t('chart-field') }}</label>
+        <div class="instructions"><p>{{ 'Which chart types the content author can choose from.'|t('chart-field') }}</p></div>
+        <div class="chart-field-type-checkboxes__grid" id="allowedChartTypesGrid">
+            {% for type in allTypes %}
+                <label class="chart-field-type-checkbox">
+                    <input
+                        type="checkbox"
+                        name="allowedChartTypes[]"
+                        value="{{ type }}"
+                        {% if type in field.allowedChartTypes %}checked{% endif %}
+                    >
+                    {{ type|replace({'-': ' '})|title }}
+                </label>
+            {% endfor %}
+        </div>
+    </div>
+
+    <hr>
+
+    {# --- Default Palette --- #}
+    {{ forms.selectField({
+        label: 'Default Color Palette'|t('chart-field'),
+        id: 'defaultPalette',
+        name: 'defaultPalette',
+        value: field.defaultPalette,
+        options: paletteOptions,
+        instructions: 'The default palette applied to new charts.'|t('chart-field'),
+    }) }}
+
+    {# --- Toggles --- #}
+    {{ forms.lightswitchField({
+        label: 'Allow custom colors per series'|t('chart-field'),
+        id: 'allowCustomColors',
+        name: 'allowCustomColors',
+        on: field.allowCustomColors,
+        instructions: 'When enabled, content authors can pick a custom color for each series.'|t('chart-field'),
+    }) }}
+
+    {{ forms.lightswitchField({
+        label: 'Show advanced styling options'|t('chart-field'),
+        id: 'showAdvancedOptions',
+        name: 'showAdvancedOptions',
+        on: field.showAdvancedOptions,
+        instructions: 'When enabled, content authors can configure legend, tooltip, and credits.'|t('chart-field'),
+    }) }}
+
+    {{ forms.lightswitchField({
+        label: 'Show live preview'|t('chart-field'),
+        id: 'showLivePreview',
+        name: 'showLivePreview',
+        on: field.showLivePreview,
+        instructions: 'When enabled, a live chart preview appears below the data entry panels in the CP.'|t('chart-field'),
+    }) }}
+
+</div>

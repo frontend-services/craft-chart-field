@@ -1,0 +1,424 @@
+/* Chart Field — Field Input Styles */
+
+.chart-field-input {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+/* Warning banner */
+.chart-field-input__warning {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #fef6e4;
+    border: 1px solid #f0d27e;
+    border-radius: 5px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    color: #7d5a0e;
+}
+
+/* Panels */
+.chart-field-panel {
+    border: 1px solid var(--hairline-color, #e3e5e8);
+    border-radius: 5px;
+    padding: 16px;
+    margin-bottom: 12px;
+    background: var(--white, #fff);
+}
+
+.chart-field-panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.chart-field-panel__heading {
+    font-size: 13px;
+    font-weight: 600;
+    margin: 0 0 12px;
+    color: var(--text-color, #29323d);
+}
+
+.chart-field-panel__header .chart-field-panel__heading {
+    margin-bottom: 0;
+}
+
+/* Chart type picker */
+.chart-field-type-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.chart-field-type-picker__btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 70px;
+    height: 62px;
+    padding: 4px 3px 3px;
+    border: 2px solid var(--hairline-color, #e3e5e8);
+    border-radius: 6px;
+    background: var(--white, #fff);
+    cursor: pointer;
+    font-size: 11px;
+    color: var(--medium-text-color, #606d7b);
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    gap: 4px;
+}
+
+.chart-field-type-picker__btn:hover {
+    border-color: var(--link-color, #0d78f2);
+    color: var(--link-color, #0d78f2);
+}
+
+.chart-field-type-picker__btn--active {
+    border-color: var(--link-color, #0d78f2);
+    background: rgba(13, 120, 242, 0.06);
+    color: var(--link-color, #0d78f2);
+}
+
+.chart-field-type-picker__icon {
+    display: block;
+    width: 30px;
+    height: 20px;
+    color: currentColor;
+}
+
+.chart-field-type-picker__icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.chart-field-type-picker__label {
+    text-align: center;
+    line-height: 1.2;
+    font-size: 10px;
+}
+
+/* Prevent SVG/span from intercepting clicks — button always receives them */
+.chart-field-type-picker__btn .chart-field-type-picker__icon,
+.chart-field-type-picker__btn .chart-field-type-picker__label {
+    pointer-events: none;
+}
+
+/* Axes grid */
+.chart-field-axes-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 600px) {
+    .chart-field-axes-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.chart-field-axis-group__title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--medium-text-color, #606d7b);
+    margin: 0 0 10px;
+}
+
+/* Field rows */
+.chart-field-field-row {
+    margin-bottom: 12px;
+}
+
+.chart-field-field-row--inline {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.chart-field-field-row--toggles {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.chart-field-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 5px;
+    color: var(--text-color, #29323d);
+}
+
+.chart-field-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Meta panel (title/subtitle) */
+.chart-field-panel--meta {
+    background: var(--gray-050, #f7f8f9);
+}
+
+/* Grid container */
+.chart-field-grid-container {
+    width: 100%;
+}
+
+.chart-field-grid-hint {
+    margin: 8px 0;
+    color: var(--medium-text-color, #606d7b);
+    font-size: 13px;
+    font-style: italic;
+}
+
+/* ChartTableEditor — custom editable table
+ *
+ * All selectors are prefixed with .cte-container so they have higher
+ * specificity than Craft CP's global table rules (e.g. table:not(.data) td).
+ */
+.cte-container {
+    width: 100%;
+}
+
+.cte-container .cte-scroll {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 4px;
+    border: 1px solid var(--hairline-color, #e3e5e8);
+}
+
+.cte-container .cte-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin: 0;
+}
+
+/* Reset Craft's global td/th padding on our cells */
+.cte-container .cte-td,
+.cte-container .cte-th {
+    border: 1px solid var(--hairline-color, #e3e5e8);
+    padding: 0;
+    padding-block: 0;
+    padding-inline: 0;
+    padding-inline-end: 0;
+    vertical-align: middle;
+}
+
+.cte-container .cte-th {
+    background: var(--gray-050, #f7f8f9);
+    font-weight: 600;
+    font-size: 12px;
+    white-space: nowrap;
+    position: relative;
+    text-align: left;
+    color: var(--text-color, #29323d);
+}
+
+.cte-container .cte-th--action {
+    width: 28px;
+    min-width: 28px;
+}
+
+.cte-container .cte-th__inner {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 8px;
+}
+
+.cte-container .cte-th--editable {
+    cursor: text;
+}
+
+.cte-container .cte-th__label {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Series color swatch in column header */
+.cte-container .cte-th__color {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    padding: 1px;
+    border: 1px solid var(--hairline-color, #e3e5e8);
+    border-radius: 3px;
+    cursor: pointer;
+    flex-shrink: 0;
+    background: none;
+}
+
+/* Delete series button in column header */
+.cte-container .cte-th__delete {
+    opacity: 0;
+    transition: opacity 0.15s;
+    cursor: pointer;
+    color: var(--gray-400, #98a2b3);
+    font-size: 13px;
+    padding: 1px 3px;
+    background: none;
+    border: none;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.cte-container .cte-th--editable:hover .cte-th__delete {
+    opacity: 1;
+}
+
+.cte-container .cte-th__delete:hover {
+    color: var(--red-500, #da3b3b);
+}
+
+/* Inline rename input in th */
+.cte-container .cte-th__rename-input {
+    font-size: 12px;
+    font-weight: 600;
+    border: none;
+    background: transparent;
+    outline: 2px solid var(--blue-300, #7eb8f7);
+    outline-offset: -2px;
+    padding: 0;
+    width: 100%;
+    color: var(--text-color, #29323d);
+    flex: 1;
+    box-shadow: none;
+}
+
+/* Cell td */
+div.cte-container td.cte-td--action {
+    width: 28px;
+    min-width: 28px;
+    text-align: center;
+    padding-inline-start: 0;
+}
+
+.cte-container .cte-td:focus-within {
+    outline: 2px solid var(--blue-300, #7eb8f7);
+    outline-offset: -2px;
+}
+
+/* Cell inputs — reset Craft input styles */
+.cte-container .cte-input {
+    display: block;
+    width: 100%;
+    padding: 5px 8px;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    color: var(--text-color, #29323d);
+    box-sizing: border-box;
+    outline: none;
+    box-shadow: none;
+    min-width: 80px;
+    border-radius: 0;
+}
+
+.cte-container .cte-input--color {
+    padding: 2px 4px;
+    height: 30px;
+    width: 52px;
+    min-width: 0;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+/* Row delete button */
+.cte-container .cte-row__delete {
+    opacity: 0;
+    transition: opacity 0.15s;
+    cursor: pointer;
+    color: var(--gray-400, #98a2b3);
+    font-size: 14px;
+    padding: 4px 6px;
+    background: none;
+    border: none;
+    line-height: 1;
+    display: block;
+    width: 100%;
+}
+
+.cte-container .cte-row:hover .cte-row__delete {
+    opacity: 1;
+}
+
+.cte-container .cte-row__delete:hover {
+    color: var(--red-500, #da3b3b);
+}
+
+/* Toolbar (add row / add series buttons) */
+.cte-container .cte-toolbar {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.cte-container .cte-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid var(--hairline-color, #e3e5e8);
+    border-radius: 4px;
+    background: var(--white, #fff);
+    color: var(--link-color, #0d78f2);
+    cursor: pointer;
+    transition: background 0.1s, border-color 0.1s;
+    text-decoration: none;
+}
+
+.cte-container .cte-btn:hover {
+    background: var(--gray-050, #f7f8f9);
+    border-color: var(--link-color, #0d78f2);
+}
+
+/* Live preview panel */
+.chart-field-panel--preview {
+    background: var(--gray-050, #f7f8f9);
+}
+
+.chart-field-preview__notice {
+    font-size: 12px;
+    color: var(--medium-text-color, #606d7b);
+    font-style: italic;
+    margin: 0 0 12px;
+}
+
+.chart-field-preview__container {
+    min-height: 60px;
+    position: relative;
+    transition: opacity 0.2s;
+    max-height: 400px;
+}
+
+.chart-field-preview__container > canvas {
+    margin-inline: auto;
+    max-width: 100%;
+}
+
+.chart-field-preview__container--loading {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.chart-field-preview__placeholder {
+    font-size: 13px;
+    color: var(--medium-text-color, #606d7b);
+    font-style: italic;
+    margin: 0;
+    padding: 24px 0;
+    text-align: center;
+}
