@@ -88,17 +88,21 @@ class ApexChartsRenderer implements ChartRendererInterface
                 $config['yaxis']['max'] = $data->yAxis['max'];
             }
             if (!empty($data->yAxis['suffix'])) {
-                $suffix = $data->yAxis['suffix'];
-                $config['yaxis']['labels'] = ['formatter' => "function(val){return val+'$suffix';}"];
+                // Store as private key; renderHtml() injects it as a proper JS function via json_encode
+                $config['_yAxisSuffix'] = $data->yAxis['suffix'];
             }
         }
 
         if (!empty($data->colors)) {
-            $config['colors'] = $data->colors;
+            $config['colors'] = array_values(array_filter(
+                array_map(fn($c) => ChartData::sanitizeColor($c), $data->colors)
+            ));
         } else {
-            $seriesColors = array_filter(array_column($data->series, 'color'));
+            $seriesColors = array_values(array_filter(
+                array_map(fn($s) => ChartData::sanitizeColor($s['color'] ?? null), $data->series)
+            ));
             if (!empty($seriesColors)) {
-                $config['colors'] = array_values($seriesColors);
+                $config['colors'] = $seriesColors;
             }
         }
 
@@ -136,9 +140,10 @@ class ApexChartsRenderer implements ChartRendererInterface
         $width = $options['width'] ?? '100%';
         $class = $options['class'] ?? '';
 
-        $prefix = $config['_valuePrefix'] ?? '';
-        $suffix = $config['_valueSuffix'] ?? '';
-        unset($config['_valuePrefix'], $config['_valueSuffix']);
+        $prefix     = $config['_valuePrefix'] ?? '';
+        $suffix     = $config['_valueSuffix'] ?? '';
+        $yAxisSuffix = $config['_yAxisSuffix'] ?? '';
+        unset($config['_valuePrefix'], $config['_valueSuffix'], $config['_yAxisSuffix']);
 
         $jsonConfig = Json::encode($config);
 
@@ -158,6 +163,10 @@ class ApexChartsRenderer implements ChartRendererInterface
                 "config.tooltip=config.tooltip||{};" .
                 "config.tooltip.y={formatter:function(val){return _p+val+_s;}};" .
                 "if(config.yaxis){config.yaxis.labels=config.yaxis.labels||{};config.yaxis.labels.formatter=function(val){return _p+val+_s;};}";
+        } elseif ($yAxisSuffix !== '') {
+            $ys = json_encode($yAxisSuffix);
+            $formatterJs = "var _ys={$ys};" .
+                "if(config.yaxis){config.yaxis.labels=config.yaxis.labels||{};config.yaxis.labels.formatter=function(val){return val+_ys;};}";
         }
 
         $initScript = '(function(){';

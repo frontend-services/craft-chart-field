@@ -16,8 +16,16 @@ class PreviewController extends Controller
     {
         $this->requirePostRequest();
 
-        $stateJson   = $this->request->getBodyParam('state', '{}');
+        $stateJson     = $this->request->getBodyParam('state', '{}');
         $libraryHandle = $this->request->getBodyParam('library', 'chartjs');
+
+        $registry = Plugin::getInstance()->rendererRegistry;
+
+        // Whitelist the library handle against registered renderers before any further use
+        $renderer = $registry->get($libraryHandle);
+        if (!$renderer) {
+            return $this->asJson(['error' => 'Invalid library']);
+        }
 
         $stateData = json_decode($stateJson, true);
         if (!is_array($stateData)) {
@@ -25,13 +33,6 @@ class PreviewController extends Controller
         }
 
         $chartData = new ChartData($stateData);
-
-        $registry = Plugin::getInstance()->rendererRegistry;
-        $renderer = $registry->get($libraryHandle);
-
-        if (!$renderer) {
-            return $this->asJson(['error' => 'Unknown renderer: ' . $libraryHandle]);
-        }
 
         $licenseKey = $renderer->isCommercial() ? $registry->getLicenseKey($libraryHandle) : null;
         $config     = $renderer->buildConfig($chartData, $licenseKey);

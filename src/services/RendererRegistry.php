@@ -78,7 +78,11 @@ class RendererRegistry extends Component
 
         $override = $settings->cdnOverrides[$handle] ?? null;
         if ($override) {
-            return [Craft::parseEnv($override)];
+            $url = Craft::parseEnv($override);
+            // Only allow absolute http/https URLs to prevent javascript: or data: injection
+            if (is_string($url) && preg_match('#^https?://#i', $url)) {
+                return [$url];
+            }
         }
 
         return $renderer->getDefaultJsAssets();

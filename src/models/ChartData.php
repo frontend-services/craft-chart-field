@@ -119,6 +119,18 @@ class ChartData extends Model
     }
 
     /**
+     * Returns the value if it is a valid CSS hex color, otherwise null.
+     * Accepts 3- or 6-digit hex colors with a leading #.
+     */
+    public static function sanitizeColor(mixed $value): ?string
+    {
+        if (!is_string($value)) {
+            return null;
+        }
+        return preg_match('/^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/', $value) ? $value : null;
+    }
+
+    /**
      * Converts the model back to the canonical array format for JSON storage.
      */
     public function serializeToArray(): array

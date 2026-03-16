@@ -208,7 +208,8 @@ JS;
         if ($isPieType) {
             $series = $data->series[0] ?? [];
             $values = array_column($series['data'] ?? [], 'value');
-            $colors = array_column($series['data'] ?? [], 'color');
+            $rawColors = array_column($series['data'] ?? [], 'color');
+            $colors = array_map(fn($c) => ChartData::sanitizeColor($c) ?? '#4A90D9', $rawColors);
 
             if (empty($colors)) {
                 $palette = $data->colors ?? $this->defaultColors();
@@ -225,7 +226,8 @@ JS;
 
         foreach ($data->series as $index => $series) {
             $palette = $data->colors ?? $this->defaultColors();
-            $color = $series['color'] ?? ($palette[$index % count($palette)] ?? '#4A90D9');
+            $rawColor = $series['color'] ?? ($palette[$index % count($palette)] ?? '#4A90D9');
+            $color = ChartData::sanitizeColor($rawColor) ?? ($palette[$index % count($palette)] ?? '#4A90D9');
 
             $dataset = [
                 'label' => $series['name'] ?? '',

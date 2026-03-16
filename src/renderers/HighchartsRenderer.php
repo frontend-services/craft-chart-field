@@ -91,8 +91,9 @@ class HighchartsRenderer implements ChartRendererInterface
                 'name' => $s['name'] ?? '',
                 'data' => $this->formatSeriesData($s['data'] ?? [], $chartType),
             ];
-            if (!empty($s['color'])) {
-                $seriesConfig['color'] = $s['color'];
+            $validColor = ChartData::sanitizeColor($s['color'] ?? null);
+            if ($validColor !== null) {
+                $seriesConfig['color'] = $validColor;
             }
             if ($chartType === 'donut') {
                 $seriesConfig['innerSize'] = '50%';
