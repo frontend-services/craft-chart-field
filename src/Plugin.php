@@ -9,6 +9,7 @@ use craft\events\RegisterComponentTypesEvent;
 use craft\services\Fields;
 use chartfield\fields\ChartField;
 use chartfield\models\Settings;
+use chartfield\renderers\HighchartsRenderer;
 use chartfield\services\RendererRegistry;
 use yii\base\Event;
 
@@ -58,6 +59,7 @@ class Plugin extends BasePlugin
         return Craft::$app->view->renderTemplate('chart-field/_settings/index', [
             'settings' => $this->getSettings(),
             'renderers' => $renderers,
+            'highchartsModules' => HighchartsRenderer::getAvailableModules(),
         ]);
     }
 }

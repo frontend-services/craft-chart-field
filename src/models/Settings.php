@@ -32,6 +32,23 @@ class Settings extends Model
     public array $cdnOverrides = [];
 
     /**
+     * Additional Highcharts modules to load alongside the core library.
+     * Values are module handles matching keys in HighchartsRenderer::getAvailableModules().
+     *
+     * Example: ['exporting', 'export-data', 'accessibility']
+     */
+    public array $highchartsModules = [];
+
+    /**
+     * CDN URL overrides for individual Highcharts modules.
+     * Keys are module handles, values are full URLs to the module JS file.
+     * If empty for a given module, the module's default CDN URL is used.
+     *
+     * Example: ['exporting' => 'https://my-cdn.example.com/modules/exporting.js']
+     */
+    public array $highchartsModuleCdnOverrides = [];
+
+    /**
      * Color palettes available to content editors.
      * Keys are palette handles, values are arrays of hex color strings.
      * Override in config/chart-field.php to add, remove, or replace palettes.
@@ -55,7 +72,7 @@ class Settings extends Model
     public function defineRules(): array
     {
         return [
-            [['licenseKeys', 'cdnOverrides', 'palettes'], 'safe'],
+            [['licenseKeys', 'cdnOverrides', 'palettes', 'highchartsModules', 'highchartsModuleCdnOverrides'], 'safe'],
             [['autoLoadJs'], 'boolean'],
         ];
     }

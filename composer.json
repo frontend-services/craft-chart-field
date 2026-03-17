@@ -3,9 +3,10 @@
     "description": "A Chart Field plugin for Craft CMS — store and render charts using Chart.js, HighCharts, or ApexCharts.",
     "type": "craft-plugin",
     "license": "proprietary",
+    "version": "1.0.2",
     "authors": [
         {
-            "name": "Frontend Services",
+            "name": "frontend.services",
             "homepage": "https://github.com/frontend-services"
         }
     ],
@@ -22,7 +23,7 @@
         "handle": "chart-field",
         "class": "chartfield\\Plugin",
         "minCraftVersion": "5.0.0",
-        "developer": "Frontend Services",
+        "developer": "frontend.services",
         "developerUrl": "https://frontend.services",
         "description": "A custom field type for creating charts with Chart.js, HighCharts, and ApexCharts.",
         "documentationUrl": "https://github.com/frontend-services/craft-chart-field",

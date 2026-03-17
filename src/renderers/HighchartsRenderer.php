@@ -47,6 +47,47 @@ class HighchartsRenderer implements ChartRendererInterface
         ];
     }
 
+    /**
+     * Returns all available optional Highcharts modules.
+     * Keys are module handles used in plugin settings.
+     * Each entry has: label, description, url (default CDN URL).
+     */
+    public static function getAvailableModules(): array
+    {
+        return [
+            'exporting' => [
+                'label' => 'Exporting',
+                'description' => 'Adds export and print buttons to charts',
+                'url' => 'https://code.highcharts.com/modules/exporting.js',
+            ],
+            'export-data' => [
+                'label' => 'Export Data',
+                'description' => 'Export chart data as CSV or XLSX (requires Exporting module)',
+                'url' => 'https://code.highcharts.com/modules/export-data.js',
+            ],
+            'accessibility' => [
+                'label' => 'Accessibility',
+                'description' => 'Screen reader support and keyboard navigation',
+                'url' => 'https://code.highcharts.com/modules/accessibility.js',
+            ],
+            'drilldown' => [
+                'label' => 'Drilldown',
+                'description' => 'Click data points to reveal sub-categories',
+                'url' => 'https://code.highcharts.com/modules/drilldown.js',
+            ],
+            'data' => [
+                'label' => 'Data',
+                'description' => 'Load chart data from HTML tables, CSV, or Google Sheets',
+                'url' => 'https://code.highcharts.com/modules/data.js',
+            ],
+            'annotations' => [
+                'label' => 'Annotations',
+                'description' => 'Add text labels and shapes to charts',
+                'url' => 'https://code.highcharts.com/modules/annotations.js',
+            ],
+        ];
+    }
+
     public function buildConfig(ChartData $data, ?string $licenseKey = null): array
     {
         $chartType = $data->chartType ?? 'line';

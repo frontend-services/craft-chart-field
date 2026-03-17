@@ -95,4 +95,34 @@ class RendererRegistry extends Component
     {
         return $this->getLicenseKey($handle) !== null;
     }
+
+    /**
+     * Returns resolved JS URLs for all enabled Highcharts modules.
+     * Respects per-module CDN overrides from plugin settings.
+     */
+    public function getHighchartsModuleJsAssets(): array
+    {
+        $settings = Plugin::getInstance()->getSettings();
+        $enabledModules = $settings->highchartsModules;
+        $overrides = $settings->highchartsModuleCdnOverrides;
+        $availableModules = HighchartsRenderer::getAvailableModules();
+
+        $urls = [];
+        foreach ($enabledModules as $moduleHandle) {
+            if (!isset($availableModules[$moduleHandle])) {
+                continue;
+            }
+            $override = $overrides[$moduleHandle] ?? null;
+            if ($override) {
+                $url = Craft::parseEnv($override);
+                if (is_string($url) && preg_match('#^https?://#i', $url)) {
+                    $urls[] = $url;
+                    continue;
+                }
+            }
+            $urls[] = $availableModules[$moduleHandle]['url'];
+        }
+
+        return $urls;
+    }
 }

@@ -45,23 +45,92 @@
         instructions: 'When enabled, the render() method automatically includes the charting library script tag. Disable if you manage script loading yourself.'|t('chart-field'),
     }) }}
 
+    <hr>
+
+    {# --- Highcharts Modules --- #}
+    <h2>{{ 'Highcharts Modules'|t('chart-field') }}</h2>
+
+    <p class="light">
+        {{ 'Select additional Highcharts modules to load alongside the core library. Modules are only loaded when the Highcharts renderer is used and Auto-load JS is enabled.'|t('chart-field') }}
+    </p>
+
+    {% set moduleOptions = [] %}
+    {% for handle, module in highchartsModules %}
+        {% set moduleOptions = moduleOptions|merge([{
+            label: module.label ~ ' — ' ~ module.description,
+            value: handle,
+        }]) %}
+    {% endfor %}
+
+    {{ forms.checkboxSelectField({
+        label: 'Enabled Modules'|t('chart-field'),
+        id: 'highchartsModules',
+        name: 'highchartsModules',
+        options: moduleOptions,
+        values: settings.highchartsModules,
+        showAllOption: false,
+    }) }}
+
+    <hr>
+
+    {# --- CDN URL Overrides --- #}
     <details class="chart-field-settings__cdn-overrides">
         <summary>{{ 'CDN URL Overrides (advanced)'|t('chart-field') }}</summary>
         <div class="chart-field-settings__cdn-overrides-content">
             <p class="light">
-                {{ 'Override the default CDN URL for any library. Useful for self-hosted copies, GDPR compliance, or pinned versions.'|t('chart-field') }}
+                {{ 'Override the default CDN URL for any library or module. Useful for self-hosted copies, GDPR compliance, or pinned versions.'|t('chart-field') }}
             </p>
+
+            {# Non-Highcharts library overrides first #}
             {% for renderer in renderers %}
-                {{ forms.autosuggestField({
-                    label: renderer.getName() ~ ' CDN URL'|t('chart-field'),
-                    id: 'cdnOverrides-' ~ renderer.getHandle(),
-                    name: 'cdnOverrides[' ~ renderer.getHandle() ~ ']',
-                    value: settings.cdnOverrides[renderer.getHandle()] ?? '',
-                    suggestEnvVars: true,
-                    placeholder: renderer.getDefaultJsAssets()[0] ?? '',
-                    instructions: 'Leave empty to use the default CDN URL.'|t('chart-field'),
-                }) }}
+                {% if renderer.getHandle() != 'highcharts' %}
+                    {{ forms.autosuggestField({
+                        label: renderer.getName() ~ ' CDN URL'|t('chart-field'),
+                        id: 'cdnOverrides-' ~ renderer.getHandle(),
+                        name: 'cdnOverrides[' ~ renderer.getHandle() ~ ']',
+                        value: settings.cdnOverrides[renderer.getHandle()] ?? '',
+                        suggestEnvVars: true,
+                        placeholder: renderer.getDefaultJsAssets()[0] ?? '',
+                        instructions: 'Leave empty to use the default CDN URL.'|t('chart-field'),
+                    }) }}
+                {% endif %}
             {% endfor %}
+
+            <hr>
+
+            {% for renderer in renderers %}
+                {% if renderer.getHandle() == 'highcharts' %}
+                    {{ forms.autosuggestField({
+                        label: renderer.getName() ~ ' CDN URL'|t('chart-field'),
+                        id: 'cdnOverrides-' ~ renderer.getHandle(),
+                        name: 'cdnOverrides[' ~ renderer.getHandle() ~ ']',
+                        value: settings.cdnOverrides[renderer.getHandle()] ?? '',
+                        suggestEnvVars: true,
+                        placeholder: renderer.getDefaultJsAssets()[0] ?? '',
+                        instructions: 'Leave empty to use the default CDN URL. Note: overriding the base URL replaces the entire CDN path, including highcharts-more.js.'|t('chart-field'),
+                    }) }}
+                {% endif %}
+            {% endfor %}
+
+            {# Highcharts module CDN overrides #}
+            {% if highchartsModules|length %}
+                <h3>{{ 'Highcharts Module CDN URLs'|t('chart-field') }}</h3>
+                <p class="light">
+                    {{ 'Override CDN URLs for individual Highcharts modules.'|t('chart-field') }}
+                </p>
+                {% for handle, module in highchartsModules %}
+                    {{ forms.autosuggestField({
+                        label: module.label ~ ' CDN URL'|t('chart-field'),
+                        id: 'highchartsModuleCdnOverrides-' ~ handle,
+                        name: 'highchartsModuleCdnOverrides[' ~ handle ~ ']',
+                        value: settings.highchartsModuleCdnOverrides[handle] ?? '',
+                        suggestEnvVars: true,
+                        placeholder: module.url,
+                        instructions: 'Leave empty to use the default CDN URL.'|t('chart-field'),
+                    }) }}
+                {% endfor %}
+            {% endif %}
+
         </div>
     </details>
 

@@ -95,10 +95,15 @@ class ChartData extends Model
         $jsAssets = [];
 
         if ($settings->autoLoadJs) {
-            $jsAssets = $plugin->rendererRegistry->getJsAssets($library);
             $view = Craft::$app->getView();
+            $jsAssets = $plugin->rendererRegistry->getJsAssets($library);
             foreach ($jsAssets as $url) {
                 $view->registerJsFile($url, ['position' => \yii\web\View::POS_HEAD]);
+            }
+            if ($library === 'highcharts') {
+                foreach ($plugin->rendererRegistry->getHighchartsModuleJsAssets() as $url) {
+                    $view->registerJsFile($url, ['position' => \yii\web\View::POS_HEAD]);
+                }
             }
         }
 
