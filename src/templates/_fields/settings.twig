@@ -3,7 +3,7 @@
 {% set supportedTypesJson %}
 {
     "chartjs": ["line", "bar", "column", "pie", "doughnut", "donut", "radar", "scatter", "polar-area", "stacked-bar", "stacked-column", "area"],
-    "highcharts": ["line", "bar", "column", "area", "pie", "donut", "scatter", "polar", "stacked-bar", "stacked-column", "stacked-area"],
+    "highcharts": ["line", "spline", "bar", "column", "area", "pie", "donut", "scatter", "polar", "stacked-bar", "stacked-column", "stacked-area"],
     "apexcharts": ["line", "bar", "column", "area", "pie", "donut", "scatter", "heatmap", "radar", "stacked-bar", "stacked-column", "stacked-area"]
 }
 {% endset %}
@@ -11,6 +11,7 @@
 {% set typeLabels %}
 {
     "line": "Line",
+    "spline": "Spline",
     "bar": "Bar (Horizontal)",
     "column": "Column (Vertical)",
     "area": "Area",

@@ -88,6 +88,7 @@ Each Chart field instance can be configured independently in the field's setting
 | Type | Chart.js | HighCharts | ApexCharts |
 |---|:---:|:---:|:---:|
 | Line | ✅ | ✅ | ✅ |
+| Spline | | ✅ | |
 | Bar (horizontal) | ✅ | ✅ | ✅ |
 | Column (vertical) | ✅ | ✅ | ✅ |
 | Area | ✅ | ✅ | ✅ |

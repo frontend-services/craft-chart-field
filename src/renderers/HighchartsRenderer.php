@@ -35,7 +35,7 @@ class HighchartsRenderer implements ChartRendererInterface
 
     public function getSupportedTypes(): array
     {
-        return ['line', 'bar', 'column', 'area', 'pie', 'donut', 'scatter', 'polar', 'stacked-bar', 'stacked-column', 'stacked-area'];
+        return ['line', 'spline', 'bar', 'column', 'area', 'pie', 'donut', 'scatter', 'polar', 'stacked-bar', 'stacked-column', 'stacked-area'];
     }
 
     public function getDefaultJsAssets(): array
