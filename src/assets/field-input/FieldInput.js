@@ -126,7 +126,6 @@
     ChartFieldInput.prototype._bindEvents = function () {
         var self = this;
 
-        this.root.addEventListener('click',  function (e) { self._onClick(e);  });
         this.root.addEventListener('input',  function (e) { self._onChange(e); });
         this.root.addEventListener('change', function (e) { self._onChange(e); });
 
@@ -140,11 +139,6 @@
                 self._serialize();
             });
         }
-    };
-
-    ChartFieldInput.prototype._onClick = function (e) {
-        var typeBtn = e.target.closest('.chart-field-type-picker__btn');
-        if (typeBtn) { this._setChartType(typeBtn.getAttribute('data-type')); }
     };
 
     ChartFieldInput.prototype._onChange = function (e) {
@@ -193,8 +187,41 @@
     };
 
     ChartFieldInput.prototype._updateTypePickerUI = function (type) {
-        this._qq('.chart-field-type-picker__btn').forEach(function (btn) {
-            btn.classList.toggle('chart-field-type-picker__btn--active', btn.getAttribute('data-type') === type);
+        var menu = this._menuEl || this._q('.chart-field-type-menu');
+        if (!menu) return;
+
+        // Mark the selected <li> — Garnish uses .sel on the <li>, not the <a>
+        menu.querySelectorAll('li').forEach(function (li) {
+            var a = li.querySelector('[data-type]');
+            li.classList.toggle('sel', !!(a && a.getAttribute('data-type') === type));
+        });
+
+        // Update trigger button: clone icon + set label from the selected option
+        var selectedOpt = menu.querySelector('[data-type="' + type + '"]');
+        if (!selectedOpt) return;
+
+        var trigIcon = this._q('.js-chart-type-icon');
+        var srcIcon  = selectedOpt.querySelector('.chart-field-type-picker__icon');
+        if (trigIcon && srcIcon) trigIcon.innerHTML = srcIcon.innerHTML;
+
+        var trigLabel = this._q('.js-chart-type-label');
+        if (trigLabel) trigLabel.textContent = selectedOpt.getAttribute('data-label') || type;
+    };
+
+    ChartFieldInput.prototype._initTypeDropdown = function () {
+        var self = this;
+        var btn  = this._q('.js-chart-type-btn');
+        if (!btn || typeof Garnish === 'undefined' || !Garnish.MenuBtn) return;
+
+        // Store ref BEFORE new Garnish.MenuBtn() — it immediately detaches the
+        // adjacent .menu element from the DOM via $btn.next('.menu').detach().
+        this._menuEl = this._q('.chart-field-type-menu');
+
+        new Garnish.MenuBtn(btn, {
+            onOptionSelect: function (option) {
+                var type = option.getAttribute('data-type');
+                if (type) self._setChartType(type);
+            },
         });
     };
 
@@ -249,6 +276,8 @@
     // -----------------------------------------------------------------------
     ChartFieldInput.prototype._render = function () {
         var s = this.state;
+
+        this._initTypeDropdown();
 
         if (s.chartType) {
             this._updateTypePickerUI(s.chartType);

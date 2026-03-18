@@ -47,64 +47,70 @@
     margin-bottom: 0;
 }
 
-/* Chart type picker */
-.chart-field-type-picker {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+/* Chart type — compact dropdown row */
+.chart-field-panel--type {
+    padding: 10px 16px;
 }
 
-.chart-field-type-picker__btn {
+.chart-field-type-row {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    width: 70px;
-    height: 62px;
-    padding: 4px 3px 3px;
-    border: 2px solid var(--hairline-color, #e3e5e8);
-    border-radius: 6px;
-    background: var(--white, #fff);
-    cursor: pointer;
-    font-size: 11px;
-    color: var(--medium-text-color, #606d7b);
-    transition: border-color 0.15s, color 0.15s, background 0.15s;
-    gap: 4px;
+    gap: 12px;
 }
 
-.chart-field-type-picker__btn:hover {
-    border-color: var(--link-color, #0d78f2);
-    color: var(--link-color, #0d78f2);
+.chart-field-type-row .chart-field-label {
+    margin: 0;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
-.chart-field-type-picker__btn--active {
-    border-color: var(--link-color, #0d78f2);
-    background: rgba(13, 120, 242, 0.06);
-    color: var(--link-color, #0d78f2);
+/* Trigger button: icon + label side by side */
+.chart-field-type-select .js-chart-type-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 160px;
+    justify-content: flex-start;
 }
 
+.chart-field-type-select .js-chart-type-btn:after {
+    margin-left: auto;
+}
+
+.chart-field-type-select .js-chart-type-btn .chart-field-type-picker__icon {
+    width: 24px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+/* Icon element — shared by trigger button and menu items */
 .chart-field-type-picker__icon {
     display: block;
-    width: 30px;
-    height: 20px;
     color: currentColor;
+    flex-shrink: 0;
 }
 
 .chart-field-type-picker__icon svg {
     width: 100%;
     height: 100%;
+    display: block;
 }
 
-.chart-field-type-picker__label {
-    text-align: center;
-    line-height: 1.2;
-    font-size: 10px;
+/* Menu items: icon + label side by side.
+ * .menu.chart-field-type-menu gives us 2-class specificity (0,2,2) which
+ * beats Craft's .menu li a (0,1,2) so we don't need !important. */
+.menu.chart-field-type-menu li a {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
 }
 
-/* Prevent SVG/span from intercepting clicks — button always receives them */
-.chart-field-type-picker__btn .chart-field-type-picker__icon,
-.chart-field-type-picker__btn .chart-field-type-picker__label {
-    pointer-events: none;
+.menu.chart-field-type-menu li a .chart-field-type-picker__icon {
+    width: 28px;
+    height: 18px;
+    /* Fixed color so SVGs using currentColor don't turn white on hover */
+    color: var(--medium-text-color, #606d7b);
 }
 
 /* Axes grid */

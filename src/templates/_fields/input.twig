@@ -61,20 +61,27 @@
     {% endif %}
 
     {# === Panel 1: Chart Type === #}
-    <div class="chart-field-panel">
-        <h3 class="chart-field-panel__heading">{{ 'Chart Type'|t('chart-field') }}</h3>
-        <div class="chart-field-type-picker js-type-picker">
-            {% for type in allowedChartTypes %}
-                <button
-                    type="button"
-                    class="chart-field-type-picker__btn"
-                    data-type="{{ type }}"
-                    title="{{ chartTypeLabels[type] ?? type }}"
-                >
-                    <span class="chart-field-type-picker__icon">{{ (chartTypeIcons[type] ?? '') | raw }}</span>
-                    <span class="chart-field-type-picker__label">{{ chartTypeLabels[type] ?? type }}</span>
+    <div class="chart-field-panel chart-field-panel--type">
+        <div class="chart-field-type-row">
+            <span class="chart-field-label">{{ 'Chart Type'|t('chart-field') }}</span>
+            <div class="chart-field-type-select">
+                <button type="button" class="btn menubtn js-chart-type-btn">
+                    <span class="chart-field-type-picker__icon js-chart-type-icon"></span>
+                    <span class="js-chart-type-label">{{ 'Select type…'|t('chart-field') }}</span>
                 </button>
-            {% endfor %}
+                <div class="menu chart-field-type-menu">
+                    <ul>
+                        {% for type in allowedChartTypes %}
+                            <li>
+                                <a data-type="{{ type }}" data-label="{{ chartTypeLabels[type] ?? type }}">
+                                    <span class="chart-field-type-picker__icon">{{ (chartTypeIcons[type] ?? '') | raw }}</span>
+                                    {{ chartTypeLabels[type] ?? type }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -94,17 +101,16 @@
 
     {# === Panel 2: Axes === #}
     <div class="chart-field-panel chart-field-panel--axes js-axes-panel">
-        <h3 class="chart-field-panel__heading">{{ 'Axes'|t('chart-field') }}</h3>
         <div class="chart-field-axes-grid">
             <div class="chart-field-axis-group">
-                <h4 class="chart-field-axis-group__title">{{ 'X Axis'|t('chart-field') }}</h4>
+                <h4 class="chart-field-panel__heading">{{ 'X Axis'|t('chart-field') }}</h4>
                 <div class="chart-field-field-row">
                     <label class="chart-field-label">{{ 'Label'|t('chart-field') }}</label>
                     <input type="text" class="text fullwidth" data-cf="xaxis-label" placeholder="{{ 'e.g. Month'|t('chart-field') }}">
                 </div>
             </div>
             <div class="chart-field-axis-group">
-                <h4 class="chart-field-axis-group__title">{{ 'Y Axis'|t('chart-field') }}</h4>
+                <h4 class="chart-field-panel__heading">{{ 'Y Axis'|t('chart-field') }}</h4>
                 <div class="chart-field-field-row">
                     <label class="chart-field-label">{{ 'Label'|t('chart-field') }}</label>
                     <input type="text" class="text fullwidth" data-cf="yaxis-label" placeholder="{{ 'e.g. Revenue (€)'|t('chart-field') }}">
