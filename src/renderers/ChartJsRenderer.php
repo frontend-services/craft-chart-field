@@ -35,14 +35,17 @@ class ChartJsRenderer implements ChartRendererInterface
     public function buildConfig(ChartData $data, ?string $licenseKey = null): array
     {
         $chartType = $data->chartType ?? 'line';
-        $type = $this->mapChartType($chartType);
+        $isCombo = $this->isComboMode($data);
+        // In combo mode, Chart.js requires 'bar' as the chart-level type so that
+        // both bar/column and line datasets share the same category axis correctly.
+        $type = $isCombo ? 'bar' : $this->mapChartType($chartType);
         $isPolar = in_array($chartType, ['pie', 'donut', 'doughnut', 'radar', 'polar-area']);
 
         $config = [
             'type' => $type,
             'data' => [
                 'labels' => $this->extractLabels($data),
-                'datasets' => $this->buildDatasets($data),
+                'datasets' => $this->buildDatasets($data, $isCombo),
             ],
             'options' => [
                 'responsive' => $data->responsive,
@@ -68,7 +71,8 @@ class ChartJsRenderer implements ChartRendererInterface
         ];
 
         if (!$isPolar) {
-            $isHorizontalBar = $chartType === 'bar';
+            // In combo mode force vertical (column) orientation; never horizontal
+            $isHorizontalBar = !$isCombo && $chartType === 'bar';
             $config['options']['indexAxis'] = $isHorizontalBar ? 'y' : 'x';
 
             $config['options']['scales'] = [
@@ -189,7 +193,7 @@ JS;
 
     private function extractLabels(ChartData $data): array
     {
-        $isPieType = in_array($data->chartType ?? '', ['pie', 'donut', 'doughnut']);
+        $isPieType = in_array($data->chartType ?? 'line', ['pie', 'donut', 'doughnut']);
 
         if ($isPieType) {
             $series = $data->series[0] ?? [];
@@ -199,10 +203,22 @@ JS;
         return $data->xAxis['categories'] ?? [];
     }
 
-    private function buildDatasets(ChartData $data): array
+    private function isComboMode(ChartData $data): bool
     {
-        $isPieType = in_array($data->chartType ?? '', ['pie', 'donut', 'doughnut']);
-        $isArea = in_array($data->chartType ?? '', ['area', 'stacked-area']);
+        $globalType = $data->chartType ?? 'line';
+        foreach ($data->series as $s) {
+            if (!empty($s['type']) && $s['type'] !== $globalType) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function buildDatasets(ChartData $data, bool $isCombo = false): array
+    {
+        $globalType = $data->chartType ?? 'line';
+        $isPieType = in_array($globalType, ['pie', 'donut', 'doughnut']);
+        $isArea = in_array($globalType, ['area', 'stacked-area']);
         $datasets = [];
 
         if ($isPieType) {
@@ -229,16 +245,25 @@ JS;
             $rawColor = $series['color'] ?? ($palette[$index % count($palette)] ?? '#4A90D9');
             $color = ChartData::sanitizeColor($rawColor) ?? ($palette[$index % count($palette)] ?? '#4A90D9');
 
+            // Resolve effective type for this series
+            $seriesType = !empty($series['type']) ? $series['type'] : $globalType;
+            $isSeriesArea = in_array($seriesType, ['area', 'stacked-area']);
+
             $dataset = [
                 'label' => $series['name'] ?? '',
                 'data' => $series['data'] ?? [],
-                'backgroundColor' => $isArea ? $this->hexToRgba($color, 0.2) : $color,
+                'backgroundColor' => ($isArea || $isSeriesArea) ? $this->hexToRgba($color, 0.2) : $color,
                 'borderColor' => $color,
                 'borderWidth' => 2,
             ];
 
-            if ($isArea) {
+            if ($isArea || $isSeriesArea) {
                 $dataset['fill'] = true;
+            }
+
+            if ($isCombo) {
+                // Explicitly declare per-dataset type; area becomes line+fill
+                $dataset['type'] = $isSeriesArea ? 'line' : $this->mapChartType($seriesType);
             }
 
             $datasets[] = $dataset;

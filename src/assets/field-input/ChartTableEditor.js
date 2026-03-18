@@ -20,6 +20,14 @@
 (function (global) {
     'use strict';
 
+    var COMBO_TYPE_LABELS = {
+        'line':    'Line',
+        'spline':  'Spline',
+        'column':  'Column',
+        'area':    'Area',
+        'scatter': 'Scatter',
+    };
+
     // -------------------------------------------------------------------------
     // Constructor
     // -------------------------------------------------------------------------
@@ -27,18 +35,22 @@
         this._container = container;
         this._mode      = options.mode || 'cartesian';
         this._palette   = options.defaultPalette || ['#4A90D9','#D94A4A','#50C878','#FFB347','#9B59B6','#1ABC9C','#E67E22','#34495E'];
-        this._allowColors = options.allowCustomColors !== false;
+        this._allowColors     = options.allowCustomColors !== false;
+        this._allowSeriesTypes = options.allowSeriesTypes === true;
+        this._comboTypes       = options.comboTypes || ['line', 'column', 'area', 'scatter'];
         this._onChangeCb  = options.onChange || null;
         this._changeTimer = null;
         this._prevValue   = null; // for Escape revert
 
         // Internal state
-        // _headers: array of column header strings (includes 'Category' at [0] for cartesian)
-        // _colors:  array aligned with _headers — null for non-series columns
-        // _rows:    2D array of raw string cell values
-        this._headers = [];
-        this._colors  = [];
-        this._rows    = [];
+        // _headers:      column header strings (includes 'Category' at [0] for cartesian)
+        // _colors:       aligned with _headers — null for non-series columns
+        // _seriesTypes:  per-series type overrides — '' means "use global chart type"
+        // _rows:         2D array of raw string cell values
+        this._headers      = [];
+        this._colors       = [];
+        this._seriesTypes  = [];
+        this._rows         = [];
 
         this._buildDOM();
         this._bindEvents();
@@ -179,6 +191,32 @@
             }
 
             th.appendChild(inner);
+
+            if (isEditable && self._allowSeriesTypes) {
+                var typeRow = document.createElement('div');
+                typeRow.className = 'cte-th__type-row';
+
+                var typeSelect = document.createElement('select');
+                typeSelect.className = 'cte-th__type-select';
+                typeSelect.setAttribute('data-cte-type-col', j);
+
+                var defaultOpt = document.createElement('option');
+                defaultOpt.value = '';
+                defaultOpt.textContent = '— Auto —';
+                typeSelect.appendChild(defaultOpt);
+
+                self._comboTypes.forEach(function (typeVal) {
+                    var opt = document.createElement('option');
+                    opt.value = typeVal;
+                    opt.textContent = COMBO_TYPE_LABELS[typeVal] || typeVal;
+                    typeSelect.appendChild(opt);
+                });
+
+                typeSelect.value = self._seriesTypes[j] || '';
+                typeRow.appendChild(typeSelect);
+                th.appendChild(typeRow);
+            }
+
             tr.appendChild(th);
         });
 
@@ -314,8 +352,16 @@
             self._scheduleChange();
         });
 
-        // Change (for color pickers which fire change, not input)
+        // Change (for color pickers and type selects which fire change, not input)
         this._wrap.addEventListener('change', function (e) {
+            // Series type select in column header
+            var typeColStr = e.target.getAttribute ? e.target.getAttribute('data-cte-type-col') : null;
+            if (typeColStr !== null) {
+                self._seriesTypes[parseInt(typeColStr, 10)] = e.target.value;
+                self._scheduleChange();
+                return;
+            }
+
             // Series color picker in column header
             var colorColStr = e.target.getAttribute ? e.target.getAttribute('data-cte-color-col') : null;
             if (colorColStr !== null) {
@@ -578,6 +624,7 @@
         var newColor = this._color(idx);
         this._headers.push(newName);
         this._colors.push(newColor);
+        this._seriesTypes.push('');
         this._rows.forEach(function (row) { row.push(''); });
     };
 
@@ -587,6 +634,7 @@
 
         this._headers.splice(colIdx, 1);
         this._colors.splice(colIdx, 1);
+        this._seriesTypes.splice(colIdx, 1);
         this._rows.forEach(function (row) { row.splice(colIdx, 1); });
         this._renderAll();
         this._scheduleChange();
@@ -636,11 +684,15 @@
             this._colors = [null].concat(series.map(function (s, i) {
                 return s.color || this._color(i);
             }, this));
+            this._seriesTypes = [null].concat(series.map(function (s) {
+                return s.type || '';
+            }));
 
             if (this._headers.length === 1) {
                 // No series yet — add a blank one with a default name
                 this._headers.push('Series 1');
                 this._colors.push(this._color(0));
+                this._seriesTypes.push('');
             }
 
             var numRows = series.reduce(function (mx, s) {
@@ -709,7 +761,7 @@
             categories: dataRows.map(function (row) { return String(row[0] || '').trim(); }),
             series: seriesCols.map(function (name, j) {
                 var colIdx = j + 1;
-                return {
+                var entry = {
                     name:  name || '',
                     color: self._colors[colIdx] || self._color(j),
                     data:  dataRows.map(function (row) {
@@ -717,6 +769,11 @@
                         return isNaN(v) ? null : v;
                     }).filter(function (v) { return v !== null; }),
                 };
+                if (self._allowSeriesTypes) {
+                    var seriesType = self._seriesTypes[colIdx] || '';
+                    if (seriesType) entry.type = seriesType;
+                }
+                return entry;
             }),
         };
     };

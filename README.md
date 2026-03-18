@@ -11,10 +11,12 @@ A Craft CMS 5 plugin that provides a **Chart** field type. Content editors enter
 - **Spreadsheet-style data entry** — editors fill in a familiar grid; no JSON, no code, no frustration.
 - **Three charting libraries, one field** — choose Chart.js (free), HighCharts, or ApexCharts per field instance; swap without touching templates.
 - **14 chart types** — Line, Bar, Column, Area, Stacked variants, Pie, Donut, Scatter, Radar, Polar, Heatmap, and more.
+- **Combo / mixed charts** — assign a different chart type per series (e.g. columns + line overlay) for all three libraries.
 - **Live CP preview** — see the chart render in real time as data is entered, before the entry is saved.
 - **Excel / Google Sheets paste** — paste a copied range directly into the grid; rows and columns are created automatically.
 - **Per-series custom colours** — pick a colour for each data series directly in the column header; colour pickers for pie/donut slices too.
 - **Configurable colour palettes** — ship with five built-in palettes (Default, Warm, Cool, Monochrome, Pastel) and define your own in `config/chart-field.php`.
+- **HighCharts optional modules** — enable Exporting, Export Data, Accessibility, Drilldown, Data, and Annotations modules from plugin settings; each loads its CDN script automatically.
 - **Library-agnostic storage** — data is saved as clean, portable JSON; switch charting libraries or go headless without re-entering data.
 - **One-line frontend rendering** — `{{ entry.myChart.render() }}` outputs the container, script tag, and initialisation in a single call.
 - **Developer-friendly config** — override CDN URLs, add license keys, and customise palettes via a plain PHP config file with `.env` variable support.
@@ -49,9 +51,22 @@ HighCharts requires a commercial license. Enter your key here so charts render w
 
 When enabled (default), the plugin automatically includes the charting library `<script>` tag when `render()` is called in your template. Disable this if you prefer to include the library yourself.
 
+### HighCharts Modules
+
+Optional HighCharts modules that can be enabled individually. When enabled and Auto-load JS is on, each module's script is included automatically after the core library.
+
+| Module | Description |
+|---|---|
+| **Exporting** | Adds export and print buttons to charts |
+| **Export Data** | Export chart data as CSV or XLSX (requires Exporting) |
+| **Accessibility** | Screen reader support and keyboard navigation |
+| **Drilldown** | Click data points to reveal sub-categories |
+| **Data** | Load data from HTML tables, CSV, or Google Sheets |
+| **Annotations** | Add text labels and shapes to charts |
+
 ### CDN URL Overrides
 
-Override the default CDN URL for any library — useful for self-hosting, GDPR compliance, or pinning a specific version.
+Override the default CDN URL for any library or module — useful for self-hosting, GDPR compliance, or pinning a specific version.
 
 ---
 
@@ -162,6 +177,14 @@ return [
     'autoLoadJs' => true,
     'cdnOverrides' => [
         'highcharts' => '/dist/highcharts.js',
+    ],
+
+    // Enable HighCharts optional modules
+    'highchartsModules' => ['exporting', 'export-data', 'accessibility'],
+
+    // Override CDN URLs for individual HighCharts modules
+    'highchartsModuleCdnOverrides' => [
+        'exporting' => '/dist/modules/exporting.js',
     ],
 
     // Define your own color palettes

@@ -302,6 +302,23 @@
     box-shadow: none;
 }
 
+/* Per-series type selector row (combo charts) */
+.cte-th__type-row {
+    padding: 3px 8px 4px;
+    border-top: 1px solid var(--hairline-color, #e3e5e8);
+}
+
+.cte-th__type-select {
+    width: 100%;
+    font-size: 11px;
+    padding: 2px 4px;
+    border: 1px solid var(--hairline-color, #e3e5e8);
+    border-radius: 3px;
+    background: var(--white, #fff);
+    color: var(--medium-text-color, #606d7b);
+    cursor: pointer;
+}
+
 /* Cell td */
 div.cte-container td.cte-td--action {
     width: 28px;

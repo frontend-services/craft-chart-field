@@ -139,6 +139,10 @@ class HighchartsRenderer implements ChartRendererInterface
             if ($chartType === 'donut') {
                 $seriesConfig['innerSize'] = '50%';
             }
+            // Per-series type override for combo charts
+            if (!empty($s['type'])) {
+                $seriesConfig['type'] = $this->mapChartType($s['type']);
+            }
             return $seriesConfig;
         }, $data->series);
 

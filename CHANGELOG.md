@@ -4,6 +4,7 @@
 
 - HighCharts modules
 - Field editor UI improvements
+- Add support for Combo
 
 ## 1.0.0 — 2026-03-05
 

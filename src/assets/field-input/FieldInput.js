@@ -111,13 +111,24 @@
             s.xAxis.categories = data.categories || [];
             s.series = (data.series || []).map(function (sr, i) {
                 var existing = s.series[i];
-                return {
+                var entry = {
                     name:  sr.name,
                     color: sr.color || (existing ? existing.color : null),
                     data:  sr.data,
                 };
+                if (sr.type) entry.type = sr.type;
+                return entry;
             });
         }
+    };
+
+    ChartFieldInput.prototype._getComboTypes = function () {
+        var lib = this._chartLibrary;
+        if (lib === 'highcharts') {
+            return ['line', 'spline', 'column', 'area', 'scatter'];
+        }
+        // Chart.js and ApexCharts
+        return ['line', 'column', 'area', 'scatter'];
     };
 
     // -----------------------------------------------------------------------
@@ -254,6 +265,8 @@
             data:              this._buildEditorData(),
             defaultPalette:    this.defaultPalette,
             allowCustomColors: this.allowCustomColors,
+            allowSeriesTypes:  mode === 'cartesian',
+            comboTypes:        this._getComboTypes(),
             onChange: function (data) {
                 self._applyEditorData(data, mode);
                 self._serialize();

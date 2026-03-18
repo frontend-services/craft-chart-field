@@ -35,12 +35,19 @@ class ApexChartsRenderer implements ChartRendererInterface
     public function buildConfig(ChartData $data, ?string $licenseKey = null): array
     {
         $chartType = $data->chartType ?? 'line';
+        $isCombo = $this->isComboMode($data);
         $isPolar = in_array($chartType, ['pie', 'donut']);
         $isStacked = in_array($chartType, ['stacked-bar', 'stacked-column', 'stacked-area']) || $data->stacking;
 
+        // In combo mode ApexCharts requires chart.type to be the type of the
+        // first series (it uses it as the "base" renderer for the axes).
+        $baseType = $isCombo
+            ? $this->mapChartType(!empty($data->series[0]['type']) ? $data->series[0]['type'] : $chartType)
+            : $this->mapChartType($chartType);
+
         $config = [
             'chart' => [
-                'type' => $this->mapChartType($chartType),
+                'type' => $baseType,
                 'height' => '100%',
                 'width' => '100%',
                 'toolbar' => ['show' => false],
@@ -64,11 +71,16 @@ class ApexChartsRenderer implements ChartRendererInterface
             $config['series'] = array_column($firstSeries['data'] ?? [], 'value');
             $config['labels'] = array_column($firstSeries['data'] ?? [], 'name');
         } else {
-            $config['series'] = array_map(function ($s) {
-                return [
+            $config['series'] = array_map(function ($s) use ($chartType, $isCombo) {
+                $entry = [
                     'name' => $s['name'] ?? '',
                     'data' => $s['data'] ?? [],
                 ];
+                if ($isCombo) {
+                    $seriesType = !empty($s['type']) ? $s['type'] : $chartType;
+                    $entry['type'] = $this->mapChartType($seriesType);
+                }
+                return $entry;
             }, $data->series);
 
             $config['xaxis'] = [
@@ -183,6 +195,17 @@ class ApexChartsRenderer implements ChartRendererInterface
     }
 
     // --- Private helpers ---
+
+    private function isComboMode(ChartData $data): bool
+    {
+        $globalType = $data->chartType ?? 'line';
+        foreach ($data->series as $s) {
+            if (!empty($s['type']) && $s['type'] !== $globalType) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     private function mapChartType(string $type): string
     {
