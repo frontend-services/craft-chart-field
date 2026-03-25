@@ -202,6 +202,9 @@ class HighchartsRenderer implements ChartRendererInterface
 
         $initScript = '(function(){';
         $initScript .= sprintf('var config=%s;', $jsonConfig);
+        $initScript .= 'config.chart=config.chart||{};config.chart.events=config.chart.events||{};';
+        $initScript .= 'config.chart.events.fullscreenOpen=function(){this.update({chart:{backgroundColor:"#ffffff"}});};';
+        $initScript .= 'config.chart.events.fullscreenClose=function(){this.update({chart:{backgroundColor:null}});};';
         if ($licenseKey) {
             // Inject the license key into chart options (HighCharts validates server-side via CDN)
             $initScript .= sprintf('if(typeof Highcharts!=="undefined"&&Highcharts.setOptions){Highcharts.setOptions({credits:{enabled:true}});}');
