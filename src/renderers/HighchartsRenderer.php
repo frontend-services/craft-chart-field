@@ -109,25 +109,33 @@ class HighchartsRenderer implements ChartRendererInterface
             'accessibility' => ['enabled' => false],
         ];
 
+        $yAxes = $data->getResolvedYAxes();
+
         if (!$isPolar) {
             $config['xAxis'] = [
-                'title' => ['text' => $data->xAxis['label'] ?? null],
+                'title'      => ['text' => $data->xAxis['label'] ?? null],
                 'categories' => $data->xAxis['categories'] ?? null,
-                'type' => $chartType === 'scatter' ? 'linear' : 'category',
+                'type'       => $chartType === 'scatter' ? 'linear' : 'category',
             ];
-            $config['yAxis'] = [
-                'title' => ['text' => $data->yAxis['label'] ?? null],
-                'labels' => ['format' => '{value}' . ($data->yAxis['suffix'] ?? '')],
-            ];
-            if (isset($data->yAxis['min'])) {
-                $config['yAxis']['min'] = $data->yAxis['min'];
-            }
-            if (isset($data->yAxis['max'])) {
-                $config['yAxis']['max'] = $data->yAxis['max'];
-            }
+
+            $yAxisConfig = array_map(function ($ax, $idx) {
+                $prefix = $ax['prefix'] ?? '';
+                $suffix = $ax['suffix'] ?? '';
+                $entry  = [
+                    'title'    => ['text' => $ax['label'] ?? null],
+                    'labels'   => ['format' => $prefix . '{value}' . $suffix],
+                    'opposite' => $idx > 0,
+                ];
+                if (isset($ax['min']) && $ax['min'] !== null) $entry['min'] = $ax['min'];
+                if (isset($ax['max']) && $ax['max'] !== null) $entry['max'] = $ax['max'];
+                return $entry;
+            }, $yAxes, array_keys($yAxes));
+
+            // Highcharts prefers a plain object when there is only one axis
+            $config['yAxis'] = count($yAxisConfig) === 1 ? $yAxisConfig[0] : $yAxisConfig;
         }
 
-        $config['series'] = array_map(function ($s) use ($data, $chartType) {
+        $config['series'] = array_map(function ($s) use ($data, $chartType, $yAxes) {
             $seriesConfig = [
                 'name' => $s['name'] ?? '',
                 'data' => $this->formatSeriesData($s['data'] ?? [], $chartType),
@@ -139,10 +147,20 @@ class HighchartsRenderer implements ChartRendererInterface
             if ($chartType === 'donut') {
                 $seriesConfig['innerSize'] = '50%';
             }
-            // Per-series type override for combo charts
             if (!empty($s['type'])) {
                 $seriesConfig['type'] = $this->mapChartType($s['type']);
             }
+            // Assign series to its Y axis
+            $axIdx = (int)($s['yAxisIndex'] ?? 0);
+            if (count($yAxes) > 1) {
+                $seriesConfig['yAxis'] = $axIdx;
+            }
+            // Per-series tooltip prefix/suffix from the axis this series belongs to
+            $ax     = $yAxes[$axIdx] ?? $yAxes[0] ?? [];
+            $prefix = $ax['prefix'] ?? '';
+            $suffix = $ax['suffix'] ?? '';
+            if ($prefix !== '') $seriesConfig['tooltip']['valuePrefix'] = $prefix;
+            if ($suffix !== '') $seriesConfig['tooltip']['valueSuffix'] = $suffix;
             return $seriesConfig;
         }, $data->series);
 
@@ -163,14 +181,8 @@ class HighchartsRenderer implements ChartRendererInterface
 
         $config['tooltip'] = [
             'enabled' => $data->tooltip['enabled'] ?? true,
-            'shared' => $data->tooltip['shared'] ?? false,
+            'shared'  => $data->tooltip['shared']  ?? false,
         ];
-        if ($data->valuePrefix !== null && $data->valuePrefix !== '') {
-            $config['tooltip']['valuePrefix'] = $data->valuePrefix;
-        }
-        if ($data->valueSuffix !== null && $data->valueSuffix !== '') {
-            $config['tooltip']['valueSuffix'] = $data->valueSuffix;
-        }
 
         if (!empty($data->colors)) {
             $config['colors'] = $data->colors;

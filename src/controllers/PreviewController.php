@@ -38,7 +38,7 @@ class PreviewController extends Controller
         $config     = $renderer->buildConfig($chartData, $licenseKey);
 
         // Strip PHP-only rendering hints before sending to JS
-        unset($config['_valuePrefix'], $config['_valueSuffix'], $config['_yAxisSuffix']);
+        unset($config['_yAxesFormatters'], $config['_perSeriesFormatters']);
 
         return $this->asJson([
             'config'  => $config,

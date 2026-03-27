@@ -106,6 +106,7 @@ class ChartField extends Field
             $decoded = Json::decodeIfJson($value);
             if (is_array($decoded)) {
                 $chartData = new ChartData($decoded);
+                $chartData->normalizeAxes();
                 $chartData->setField($this);
                 return $chartData;
             }
@@ -113,6 +114,7 @@ class ChartField extends Field
 
         if (is_array($value) && !empty($value)) {
             $chartData = new ChartData($value);
+            $chartData->normalizeAxes();
             $chartData->setField($this);
             return $chartData;
         }

@@ -100,37 +100,11 @@
         </div>
     </div>
 
-    {# === Panel 2: Axes === #}
+    {# === Panel 2: X Axis === #}
     <div class="chart-field-panel chart-field-panel--axes js-axes-panel">
-        <div class="chart-field-axes-grid">
-            <div class="chart-field-axis-group">
-                <h4 class="chart-field-panel__heading">{{ 'X Axis'|t('chart-field') }}</h4>
-                <div class="chart-field-field-row">
-                    <label class="chart-field-label">{{ 'Label'|t('chart-field') }}</label>
-                    <input type="text" class="text fullwidth" data-cf="xaxis-label" placeholder="{{ 'e.g. Month'|t('chart-field') }}">
-                </div>
-            </div>
-            <div class="chart-field-axis-group">
-                <h4 class="chart-field-panel__heading">{{ 'Y Axis'|t('chart-field') }}</h4>
-                <div class="chart-field-field-row">
-                    <label class="chart-field-label">{{ 'Label'|t('chart-field') }}</label>
-                    <input type="text" class="text fullwidth" data-cf="yaxis-label" placeholder="{{ 'e.g. Revenue (€)'|t('chart-field') }}">
-                </div>
-                <div class="chart-field-field-row chart-field-field-row--inline">
-                    <div>
-                        <label class="chart-field-label">{{ 'Min'|t('chart-field') }}</label>
-                        <input type="number" class="text" data-cf="yaxis-min" style="width:80px;" placeholder="auto">
-                    </div>
-                    <div>
-                        <label class="chart-field-label">{{ 'Max'|t('chart-field') }}</label>
-                        <input type="number" class="text" data-cf="yaxis-max" style="width:80px;" placeholder="auto">
-                    </div>
-                    <div>
-                        <label class="chart-field-label">{{ 'Suffix'|t('chart-field') }}</label>
-                        <input type="text" class="text" data-cf="yaxis-suffix" style="width:80px;" placeholder="€">
-                    </div>
-                </div>
-            </div>
+        <div class="chart-field-field-row" style="margin-bottom:0;">
+            <label class="chart-field-label">{{ 'X Axis Label'|t('chart-field') }}</label>
+            <input type="text" class="text fullwidth" data-cf="xaxis-label" placeholder="{{ 'e.g. Month'|t('chart-field') }}">
         </div>
     </div>
 
@@ -138,6 +112,15 @@
     <div class="chart-field-panel chart-field-panel--series">
         <h3 class="chart-field-panel__heading">{{ 'Data'|t('chart-field') }}</h3>
         <div class="js-chart-grid chart-field-grid-container"></div>
+
+        {# Y Axes config — rendered dynamically by JS; hidden until a non-polar chart type is chosen #}
+        <div class="js-yaxes-section chart-field-yaxes-section" style="display:none;">
+            <div class="chart-field-yaxes-section__header">
+                <h4 class="chart-field-panel__heading">{{ 'Y Axes'|t('chart-field') }}</h4>
+                <button type="button" class="btn" data-cf="yaxis-add">{{ '+ Add Y Axis'|t('chart-field') }}</button>
+            </div>
+            <div class="js-yaxes-container"></div>
+        </div>
     </div>
 
 
@@ -184,17 +167,6 @@
                     <input type="checkbox" data-cf="tooltip-shared">
                     {{ 'Shared tooltip'|t('chart-field') }}
                 </label>
-            </div>
-            <hr style="margin:12px 0;border:none;border-top:1px solid var(--hairline-color,#e3e5e8);">
-            <div class="chart-field-field-row chart-field-field-row--inline">
-                <div>
-                    <label class="chart-field-label">{{ 'Value prefix'|t('chart-field') }}</label>
-                    <input type="text" class="text" data-cf="value-prefix" style="width:90px;" placeholder="{{ '$, £, …'|t('chart-field') }}">
-                </div>
-                <div>
-                    <label class="chart-field-label">{{ 'Value suffix'|t('chart-field') }}</label>
-                    <input type="text" class="text" data-cf="value-suffix" style="width:90px;" placeholder="{{ '€, %, kg, …'|t('chart-field') }}">
-                </div>
             </div>
         </div>
     {% endif %}

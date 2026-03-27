@@ -66,6 +66,8 @@ class ApexChartsRenderer implements ChartRendererInterface
             $config['chart']['stacked'] = true;
         }
 
+        $yAxes = $data->getResolvedYAxes();
+
         if ($isPolar) {
             $firstSeries = $data->series[0] ?? [];
             $config['series'] = array_column($firstSeries['data'] ?? [], 'value');
@@ -84,24 +86,62 @@ class ApexChartsRenderer implements ChartRendererInterface
             }, $data->series);
 
             $config['xaxis'] = [
-                'title' => ['text' => $data->xAxis['label'] ?? ''],
+                'title'      => ['text' => $data->xAxis['label'] ?? ''],
                 'categories' => $data->xAxis['categories'] ?? [],
-                'type' => $chartType === 'scatter' ? 'numeric' : 'category',
+                'type'       => $chartType === 'scatter' ? 'numeric' : 'category',
             ];
 
-            $config['yaxis'] = [
-                'title' => ['text' => $data->yAxis['label'] ?? ''],
-            ];
+            // Build yaxis array — one entry per series, grouped by shared axis
+            $axisFirstSeriesName = [];
+            foreach ($data->series as $s) {
+                $axIdx = (int)($s['yAxisIndex'] ?? 0);
+                if (!isset($axisFirstSeriesName[$axIdx])) {
+                    $axisFirstSeriesName[$axIdx] = $s['name'] ?? '';
+                }
+            }
 
-            if (isset($data->yAxis['min'])) {
-                $config['yaxis']['min'] = $data->yAxis['min'];
+            $yaxisEntries = [];
+            foreach ($data->series as $s) {
+                $axIdx     = (int)($s['yAxisIndex'] ?? 0);
+                $ax        = $yAxes[$axIdx] ?? $yAxes[0] ?? [];
+                $firstName = $axisFirstSeriesName[$axIdx] ?? '';
+                $isFirst   = ($s['name'] ?? '') === $firstName;
+
+                if ($isFirst) {
+                    $entry = [
+                        'title'    => ['text' => $ax['label'] ?? ''],
+                        'opposite' => $axIdx > 0,
+                    ];
+                    if (isset($ax['min']) && $ax['min'] !== null) $entry['min'] = $ax['min'];
+                    if (isset($ax['max']) && $ax['max'] !== null) $entry['max'] = $ax['max'];
+                } else {
+                    $entry = [
+                        'show'       => false,
+                        'seriesName' => $firstName,
+                    ];
+                }
+                $yaxisEntries[] = $entry;
             }
-            if (isset($data->yAxis['max'])) {
-                $config['yaxis']['max'] = $data->yAxis['max'];
-            }
-            if (!empty($data->yAxis['suffix'])) {
-                // Store as private key; renderHtml() injects it as a proper JS function via json_encode
-                $config['_yAxisSuffix'] = $data->yAxis['suffix'];
+
+            // Single series + single axis: use plain object (cleaner config)
+            $config['yaxis'] = count($yaxisEntries) === 1 ? $yaxisEntries[0] : $yaxisEntries;
+
+            // Per-series formatters (prefix/suffix) — stored as private key for renderHtml()
+            $perSeriesFormatters = array_map(function ($s) use ($yAxes) {
+                $axIdx = (int)($s['yAxisIndex'] ?? 0);
+                $ax    = $yAxes[$axIdx] ?? $yAxes[0] ?? [];
+                return [
+                    'prefix' => $ax['prefix'] ?? '',
+                    'suffix' => $ax['suffix'] ?? '',
+                ];
+            }, $data->series);
+
+            $hasFormatters = !empty(array_filter(
+                $perSeriesFormatters,
+                fn($f) => $f['prefix'] !== '' || $f['suffix'] !== ''
+            ));
+            if ($hasFormatters) {
+                $config['_perSeriesFormatters'] = array_values($perSeriesFormatters);
             }
         }
 
@@ -130,14 +170,6 @@ class ApexChartsRenderer implements ChartRendererInterface
 
         $config['dataLabels'] = ['enabled' => false];
 
-        // Store prefix/suffix as private keys for renderHtml()
-        if ($data->valuePrefix !== null && $data->valuePrefix !== '') {
-            $config['_valuePrefix'] = $data->valuePrefix;
-        }
-        if ($data->valueSuffix !== null && $data->valueSuffix !== '') {
-            $config['_valueSuffix'] = $data->valueSuffix;
-        }
-
         return $config;
     }
 
@@ -152,10 +184,8 @@ class ApexChartsRenderer implements ChartRendererInterface
         $width = $options['width'] ?? '100%';
         $class = $options['class'] ?? '';
 
-        $prefix     = $config['_valuePrefix'] ?? '';
-        $suffix     = $config['_valueSuffix'] ?? '';
-        $yAxisSuffix = $config['_yAxisSuffix'] ?? '';
-        unset($config['_valuePrefix'], $config['_valueSuffix'], $config['_yAxisSuffix']);
+        $formatters = $config['_perSeriesFormatters'] ?? [];
+        unset($config['_perSeriesFormatters']);
 
         $jsonConfig = Json::encode($config);
 
@@ -168,21 +198,27 @@ class ApexChartsRenderer implements ChartRendererInterface
         );
 
         $formatterJs = '';
-        if ($prefix !== '' || $suffix !== '') {
-            $p = json_encode($prefix);
-            $s = json_encode($suffix);
-            $formatterJs = "var _p={$p},_s={$s};" .
+        if (!empty($formatters)) {
+            $fmtJson     = json_encode(array_values($formatters));
+            $formatterJs =
+                "var _pf={$fmtJson};" .
                 "config.tooltip=config.tooltip||{};" .
-                "config.tooltip.y={formatter:function(val){return _p+val+_s;}};" .
-                "if(config.yaxis){config.yaxis.labels=config.yaxis.labels||{};config.yaxis.labels.formatter=function(val){return _p+val+_s;};}";
-        } elseif ($yAxisSuffix !== '') {
-            $ys = json_encode($yAxisSuffix);
-            $formatterJs = "var _ys={$ys};" .
-                "if(config.yaxis){config.yaxis.labels=config.yaxis.labels||{};config.yaxis.labels.formatter=function(val){return val+_ys;};}";
+                "config.tooltip.y=_pf.map(function(f){return{formatter:function(val){return (f.prefix||'')+val+(f.suffix||'');}}; });" .
+                "var _ya=Array.isArray(config.yaxis)?config.yaxis:(config.yaxis?[config.yaxis]:[]);" .
+                "var _afSeen={};" .
+                "(config.series||[]).forEach(function(s,i){" .
+                "var e=_ya[i];if(!e||e.seriesName)return;" .
+                "var f=_pf[i]||{prefix:'',suffix:''};" .
+                "if(!_afSeen[s.name]&&(f.prefix||f.suffix)){" .
+                "_afSeen[s.name]=true;" .
+                "e.labels=e.labels||{};" .
+                "(function(p,sf){e.labels.formatter=function(val){return p+val+sf;};})(f.prefix||'',f.suffix||'');" .
+                "}" .
+                "});";
         }
 
-        $initScript = '(function(){';
-        $initScript .= sprintf('if(typeof ApexCharts==="undefined"){console.warn("Chart Field: ApexCharts JS not loaded.");return;}');
+        $initScript  = '(function(){';
+        $initScript .= 'if(typeof ApexCharts==="undefined"){console.warn("Chart Field: ApexCharts JS not loaded.");return;}';
         $initScript .= sprintf('var config=%s;', $jsonConfig);
         $initScript .= $formatterJs;
         $initScript .= sprintf('var chart=new ApexCharts(document.getElementById(%s),config);', json_encode($containerId));

@@ -408,6 +408,88 @@ div.cte-container td.cte-td--action {
     border-color: var(--link-color, #0d78f2);
 }
 
+/* Y Axes section (below data table, inside Data panel) */
+.chart-field-yaxes-section {
+    margin-top: 16px;
+    border-top: 1px solid var(--hairline-color, #e3e5e8);
+    padding-top: 14px;
+}
+
+.chart-field-yaxes-section__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.chart-field-yaxes-section__header .chart-field-panel__heading {
+    margin: 0;
+}
+
+.chart-field-yaxis-entry {
+    border: 1px solid var(--hairline-color, #e3e5e8);
+    border-radius: 4px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: var(--gray-050, #f7f8f9);
+}
+
+.chart-field-yaxis-entry__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.chart-field-yaxis-entry__title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--medium-text-color, #606d7b);
+}
+
+.chart-field-yaxis-entry__delete {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--gray-400, #98a2b3);
+    font-size: 16px;
+    line-height: 1;
+    padding: 2px 5px;
+    border-radius: 3px;
+}
+
+.chart-field-yaxis-entry__delete:hover {
+    color: var(--red-500, #da3b3b);
+    background: var(--red-050, #fef2f2);
+}
+
+.chart-field-yaxis-entry__fields .chart-field-field-row {
+    margin-bottom: 8px;
+}
+
+.chart-field-yaxis-entry__fields .chart-field-field-row:last-child {
+    margin-bottom: 0;
+}
+
+/* Per-series axis selector row in table header */
+.cte-th__axis-row {
+    padding: 3px 8px 4px;
+    border-top: 1px solid var(--hairline-color, #e3e5e8);
+}
+
+.cte-th__axis-select {
+    width: 100%;
+    font-size: 11px;
+    padding: 2px 4px;
+    border: 1px solid var(--hairline-color, #e3e5e8);
+    border-radius: 3px;
+    background: var(--white, #fff);
+    color: var(--medium-text-color, #606d7b);
+    cursor: pointer;
+}
+
 /* Live preview panel */
 .chart-field-panel--preview {
     background: var(--gray-050, #f7f8f9);

@@ -71,45 +71,46 @@ class ChartJsRenderer implements ChartRendererInterface
         ];
 
         if (!$isPolar) {
-            // In combo mode force vertical (column) orientation; never horizontal
             $isHorizontalBar = !$isCombo && $chartType === 'bar';
             $config['options']['indexAxis'] = $isHorizontalBar ? 'y' : 'x';
 
+            $yAxes = $data->getResolvedYAxes();
+
             $config['options']['scales'] = [
                 'x' => [
-                    'title' => [
+                    'title'   => [
                         'display' => !empty($data->xAxis['label'] ?? null),
-                        'text' => $data->xAxis['label'] ?? '',
-                    ],
-                    'stacked' => $data->stacking,
-                ],
-                'y' => [
-                    'title' => [
-                        'display' => !empty($data->yAxis['label'] ?? null),
-                        'text' => $data->yAxis['label'] ?? '',
+                        'text'    => $data->xAxis['label'] ?? '',
                     ],
                     'stacked' => $data->stacking,
                 ],
             ];
 
-            if (isset($data->yAxis['min'])) {
-                $config['options']['scales']['y']['min'] = $data->yAxis['min'];
+            foreach ($yAxes as $idx => $ax) {
+                $scaleId = $idx === 0 ? 'y' : 'y' . $idx;
+                $scale   = [
+                    'title'    => [
+                        'display' => !empty($ax['label'] ?? null),
+                        'text'    => $ax['label'] ?? '',
+                    ],
+                    'stacked'  => $data->stacking,
+                    'position' => $idx > 0 ? 'right' : 'left',
+                ];
+                if (isset($ax['min']) && $ax['min'] !== null) $scale['min'] = $ax['min'];
+                if (isset($ax['max']) && $ax['max'] !== null) $scale['max'] = $ax['max'];
+                $config['options']['scales'][$scaleId] = $scale;
             }
-            if (isset($data->yAxis['max'])) {
-                $config['options']['scales']['y']['max'] = $data->yAxis['max'];
-            }
-            if (!empty($data->yAxis['suffix'])) {
-                $config['_yAxisSuffix'] = $data->yAxis['suffix'];
-            }
-        }
 
-        // Store prefix/suffix as private keys for use in renderHtml()
-        // (Chart.js requires JS functions for formatters — can't go in JSON)
-        if ($data->valuePrefix !== null && $data->valuePrefix !== '') {
-            $config['_valuePrefix'] = $data->valuePrefix;
-        }
-        if ($data->valueSuffix !== null && $data->valueSuffix !== '') {
-            $config['_valueSuffix'] = $data->valueSuffix;
+            // Pass per-axis formatters to renderHtml() via private key
+            $formatters = array_map(fn($ax) => [
+                'prefix' => $ax['prefix'] ?? '',
+                'suffix' => $ax['suffix'] ?? '',
+            ], $yAxes);
+
+            $hasFormatters = !empty(array_filter($formatters, fn($f) => $f['prefix'] !== '' || $f['suffix'] !== ''));
+            if ($hasFormatters) {
+                $config['_yAxesFormatters'] = array_values($formatters);
+            }
         }
 
         return $config;
@@ -126,11 +127,8 @@ class ChartJsRenderer implements ChartRendererInterface
         $width = $options['width'] ?? '100%';
         $class = $options['class'] ?? '';
 
-        // Extract and remove private keys before JSON serialization
-        $prefix = $config['_valuePrefix'] ?? '';
-        $suffix = $config['_valueSuffix'] ?? '';
-        $yAxisSuffix = $config['_yAxisSuffix'] ?? '';
-        unset($config['_valuePrefix'], $config['_valueSuffix'], $config['_yAxisSuffix']);
+        $yAxesFormatters = $config['_yAxesFormatters'] ?? [];
+        unset($config['_yAxesFormatters']);
 
         $jsonConfig = Json::encode($config);
 
@@ -143,28 +141,37 @@ class ChartJsRenderer implements ChartRendererInterface
         );
 
         $formatterJs = '';
-        if ($prefix !== '' || $suffix !== '' || $yAxisSuffix !== '') {
-            $p  = json_encode($prefix);
-            $s  = json_encode($suffix);
-            $ys = json_encode($yAxisSuffix);
-            $formatterJs = <<<JS
-var _p={$p},_s={$s},_ys={$ys};
+        if (!empty($yAxesFormatters)) {
+            $fmtJson  = json_encode(array_values($yAxesFormatters));
+            $scaleMap = [];
+            foreach ($yAxesFormatters as $idx => $_) {
+                $scaleMap[$idx === 0 ? 'y' : 'y' . $idx] = $idx;
+            }
+            $scaleMapJson = json_encode($scaleMap);
+            $formatterJs  = <<<JS
+var _axFmt={$fmtJson},_scMap={$scaleMapJson};
 config.options=config.options||{};
+config.options.scales=config.options.scales||{};
+Object.keys(_scMap).forEach(function(sid){
+  var ai=_scMap[sid],f=_axFmt[ai]||{prefix:'',suffix:''};
+  if(f.prefix||f.suffix){
+    config.options.scales[sid]=config.options.scales[sid]||{};
+    config.options.scales[sid].ticks=config.options.scales[sid].ticks||{};
+    (function(p,s){config.options.scales[sid].ticks.callback=function(val){return p+val+s;};})(f.prefix||'',f.suffix||'');
+  }
+});
 config.options.plugins=config.options.plugins||{};
-if(_p||_s){
 config.options.plugins.tooltip=config.options.plugins.tooltip||{};
 config.options.plugins.tooltip.callbacks={
-    label:function(ctx){
-        var val=ctx.parsed&&ctx.parsed.y!==undefined?ctx.parsed.y:(typeof ctx.parsed==='number'?ctx.parsed:ctx.formattedValue);
-        var lbl=ctx.dataset?ctx.dataset.label||'':'';
-        return (lbl?lbl+': ':'')+_p+val+_s;
-    }
-};}
-if(_ys){
-config.options.scales=config.options.scales||{};
-config.options.scales.y=config.options.scales.y||{};
-config.options.scales.y.ticks=config.options.scales.y.ticks||{};
-config.options.scales.y.ticks.callback=function(val){return val+_ys;};}
+  label:function(ctx){
+    var aid=ctx.dataset&&ctx.dataset.yAxisID?ctx.dataset.yAxisID:'y';
+    var ai=_scMap[aid]!==undefined?_scMap[aid]:0;
+    var f=_axFmt[ai]||{prefix:'',suffix:''};
+    var val=ctx.parsed&&ctx.parsed.y!==undefined?ctx.parsed.y:(typeof ctx.parsed==='number'?ctx.parsed:ctx.formattedValue);
+    var lbl=ctx.dataset?ctx.dataset.label||'':'';
+    return(lbl?lbl+': ':'')+( f.prefix||'')+val+(f.suffix||'');
+  }
+};
 JS;
         }
 
@@ -216,6 +223,7 @@ JS;
 
     private function buildDatasets(ChartData $data, bool $isCombo = false): array
     {
+        $yAxes = $data->getResolvedYAxes();
         $globalType = $data->chartType ?? 'line';
         $isPieType = in_array($globalType, ['pie', 'donut', 'doughnut']);
         $isArea = in_array($globalType, ['area', 'stacked-area']);
@@ -262,9 +270,12 @@ JS;
             }
 
             if ($isCombo) {
-                // Explicitly declare per-dataset type; area becomes line+fill
                 $dataset['type'] = $isSeriesArea ? 'line' : $this->mapChartType($seriesType);
             }
+
+            // Assign dataset to its Y axis scale
+            $yAxisIndex = (int)($series['yAxisIndex'] ?? 0);
+            $dataset['yAxisID'] = $yAxisIndex === 0 ? 'y' : 'y' . $yAxisIndex;
 
             $datasets[] = $dataset;
         }

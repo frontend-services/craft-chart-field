@@ -39,25 +39,38 @@
         this._tableEditor = null;
 
         this.state = {
-            chartType:   null,
-            title:       '',
-            subtitle:    '',
-            xAxis:       { label: '', type: 'category', categories: [] },
-            yAxis:       { label: '', min: null, max: null, suffix: '' },
-            series:      [],
-            legend:      { enabled: true, position: 'bottom' },
-            tooltip:     { enabled: true, shared: false },
-            credits:     false,
-            responsive:  true,
-            stacking:    false,
-            valuePrefix: null,
-            valueSuffix: null,
+            chartType:  null,
+            title:      '',
+            subtitle:   '',
+            xAxis:      { label: '', type: 'category', categories: [] },
+            yAxes:      [{ label: '', min: null, max: null, prefix: '', suffix: '' }],
+            series:     [],
+            legend:     { enabled: true, position: 'bottom' },
+            tooltip:    { enabled: true, shared: false },
+            credits:    false,
+            responsive: true,
+            stacking:   false,
         };
 
         var hidden = this._q('.js-chart-field-value');
         if (hidden && hidden.value) {
             try { this.state = Object.assign(this.state, JSON.parse(hidden.value)); } catch (e) {}
         }
+
+        // Migrate old single-axis format to yAxes array
+        if (!this.state.yAxes) {
+            var oldAx = this.state.yAxis || {};
+            this.state.yAxes = [{
+                label:  oldAx.label  || '',
+                min:    oldAx.min    !== undefined ? oldAx.min  : null,
+                max:    oldAx.max    !== undefined ? oldAx.max  : null,
+                prefix: this.state.valuePrefix || '',
+                suffix: this.state.valueSuffix || oldAx.suffix || '',
+            }];
+        }
+        delete this.state.yAxis;
+        delete this.state.valuePrefix;
+        delete this.state.valueSuffix;
 
         this._bindEvents();
         this._render();
@@ -116,7 +129,8 @@
                     color: sr.color || (existing ? existing.color : null),
                     data:  sr.data,
                 };
-                if (sr.type) entry.type = sr.type;
+                if (sr.type)       entry.type       = sr.type;
+                if (sr.yAxisIndex) entry.yAxisIndex = sr.yAxisIndex;
                 return entry;
             });
         }
@@ -150,6 +164,16 @@
                 self._serialize();
             });
         }
+
+        // Y Axes add / delete buttons
+        this.root.addEventListener('click', function (e) {
+            var cf = e.target.getAttribute ? e.target.getAttribute('data-cf') : null;
+            if (cf === 'yaxis-add') {
+                self._addAxis();
+            } else if (cf === 'yaxis-delete') {
+                self._deleteAxis(parseInt(e.target.getAttribute('data-axis') || '0', 10));
+            }
+        });
     };
 
     ChartFieldInput.prototype._onChange = function (e) {
@@ -161,16 +185,26 @@
             case 'title':    this.state.title = t.value; break;
             case 'subtitle': this.state.subtitle = t.value; break;
             case 'xaxis-label': this.state.xAxis.label = t.value; break;
-            case 'yaxis-label':  this.state.yAxis.label  = t.value; break;
-            case 'yaxis-min':    this.state.yAxis.min    = t.value !== '' ? parseFloat(t.value) : null; break;
-            case 'yaxis-max':    this.state.yAxis.max    = t.value !== '' ? parseFloat(t.value) : null; break;
-            case 'yaxis-suffix': this.state.yAxis.suffix = t.value; break;
-            case 'legend-enabled':  this.state.legend.enabled   = t.checked; break;
-            case 'legend-position': this.state.legend.position  = t.value; break;
-            case 'tooltip-enabled': this.state.tooltip.enabled  = t.checked; break;
-            case 'tooltip-shared':  this.state.tooltip.shared   = t.checked; break;
-            case 'value-prefix': this.state.valuePrefix = t.value || null; break;
-            case 'value-suffix': this.state.valueSuffix = t.value || null; break;
+            case 'yaxis-label':
+            case 'yaxis-min':
+            case 'yaxis-max':
+            case 'yaxis-prefix':
+            case 'yaxis-suffix': {
+                var axIdx = parseInt(t.getAttribute('data-axis') || '0', 10);
+                this.state.yAxes = this.state.yAxes || [{}];
+                this.state.yAxes[axIdx] = this.state.yAxes[axIdx] || {};
+                var axKey = cf.replace('yaxis-', '');
+                if (axKey === 'min' || axKey === 'max') {
+                    this.state.yAxes[axIdx][axKey] = t.value !== '' ? parseFloat(t.value) : null;
+                } else {
+                    this.state.yAxes[axIdx][axKey] = t.value;
+                }
+                break;
+            }
+            case 'legend-enabled':  this.state.legend.enabled  = t.checked; break;
+            case 'legend-position': this.state.legend.position = t.value; break;
+            case 'tooltip-enabled': this.state.tooltip.enabled = t.checked; break;
+            case 'tooltip-shared':  this.state.tooltip.shared  = t.checked; break;
         }
         this._serialize();
         this._schedulePreview();
@@ -238,9 +272,11 @@
 
     ChartFieldInput.prototype._updatePanelVisibility = function (type) {
         if (!type) return;
-        var noAxes    = NO_AXIS_TYPES.indexOf(type) !== -1;
-        var axesPanel = this._q('.js-axes-panel');
+        var noAxes     = NO_AXIS_TYPES.indexOf(type) !== -1;
+        var axesPanel  = this._q('.js-axes-panel');
         if (axesPanel) axesPanel.style.display = noAxes ? 'none' : '';
+        var yaxesSection = this._q('.js-yaxes-section');
+        if (yaxesSection) yaxesSection.style.display = noAxes ? 'none' : '';
     };
 
     // -----------------------------------------------------------------------
@@ -267,6 +303,7 @@
             allowCustomColors: this.allowCustomColors,
             allowSeriesTypes:  mode === 'cartesian',
             comboTypes:        this._getComboTypes(),
+            yAxisCount:        (this.state.yAxes || [{}]).length,
             onChange: function (data) {
                 self._applyEditorData(data, mode);
                 self._serialize();
@@ -282,6 +319,126 @@
         }
         var container = this._q('.js-chart-grid');
         if (container) container.innerHTML = '';
+    };
+
+    // -----------------------------------------------------------------------
+    // Y Axes management
+    // -----------------------------------------------------------------------
+    ChartFieldInput.prototype._renderAxesUI = function () {
+        var container = this._q('.js-yaxes-container');
+        if (!container) return;
+        container.innerHTML = '';
+        var self = this;
+        (this.state.yAxes || [{}]).forEach(function (ax, idx) {
+            container.appendChild(self._buildAxisEntry(ax, idx));
+        });
+    };
+
+    ChartFieldInput.prototype._buildAxisEntry = function (ax, idx) {
+        var div = document.createElement('div');
+        div.className = 'chart-field-yaxis-entry';
+        div.setAttribute('data-axis', idx);
+
+        var header = document.createElement('div');
+        header.className = 'chart-field-yaxis-entry__header';
+
+        var title = document.createElement('span');
+        title.className   = 'chart-field-yaxis-entry__title';
+        title.textContent = 'Y Axis ' + (idx + 1);
+        header.appendChild(title);
+
+        if (idx > 0) {
+            var delBtn = document.createElement('button');
+            delBtn.type        = 'button';
+            delBtn.className   = 'chart-field-yaxis-entry__delete';
+            delBtn.textContent = '\u00d7'; // × character
+            delBtn.setAttribute('data-axis', idx);
+            delBtn.setAttribute('data-cf',   'yaxis-delete');
+            delBtn.setAttribute('title', 'Remove Y Axis ' + (idx + 1));
+            header.appendChild(delBtn);
+        }
+        div.appendChild(header);
+
+        var fields = document.createElement('div');
+        fields.className = 'chart-field-yaxis-entry__fields';
+
+        var labelRow = document.createElement('div');
+        labelRow.className = 'chart-field-field-row';
+        var labelLbl = document.createElement('label');
+        labelLbl.className   = 'chart-field-label';
+        labelLbl.textContent = 'Label';
+        var labelInput = document.createElement('input');
+        labelInput.type = 'text';
+        labelInput.className = 'text fullwidth';
+        labelInput.setAttribute('data-cf',   'yaxis-label');
+        labelInput.setAttribute('data-axis',  idx);
+        labelInput.value = ax.label || '';
+        labelRow.appendChild(labelLbl);
+        labelRow.appendChild(labelInput);
+        fields.appendChild(labelRow);
+
+        var inlineRow = document.createElement('div');
+        inlineRow.className = 'chart-field-field-row chart-field-field-row--inline';
+
+        var mkField = function (labelText, cf, placeholder, type, val) {
+            var wrap = document.createElement('div');
+            var lbl  = document.createElement('label');
+            lbl.className   = 'chart-field-label';
+            lbl.textContent = labelText;
+            var inp = document.createElement('input');
+            inp.type = type || 'text';
+            inp.className = 'text';
+            inp.style.width = '70px';
+            inp.setAttribute('data-cf',   cf);
+            inp.setAttribute('data-axis', idx);
+            inp.placeholder = placeholder;
+            if (val !== null && val !== undefined && val !== '') inp.value = val;
+            wrap.appendChild(lbl);
+            wrap.appendChild(inp);
+            return wrap;
+        };
+
+        inlineRow.appendChild(mkField('Min',    'yaxis-min',    'auto', 'number', ax.min));
+        inlineRow.appendChild(mkField('Max',    'yaxis-max',    'auto', 'number', ax.max));
+        inlineRow.appendChild(mkField('Prefix', 'yaxis-prefix', '$',    'text',   ax.prefix));
+        inlineRow.appendChild(mkField('Suffix', 'yaxis-suffix', '\u20ac', 'text', ax.suffix));
+        fields.appendChild(inlineRow);
+
+        div.appendChild(fields);
+        return div;
+    };
+
+    ChartFieldInput.prototype._addAxis = function () {
+        this.state.yAxes = this.state.yAxes || [{}];
+        this.state.yAxes.push({ label: '', min: null, max: null, prefix: '', suffix: '' });
+        this._renderAxesUI();
+        this._updateTableEditorYAxisCount();
+        this._serialize();
+        this._schedulePreview();
+    };
+
+    ChartFieldInput.prototype._deleteAxis = function (idx) {
+        var axes = this.state.yAxes || [];
+        if (idx <= 0 || idx >= axes.length) return;
+        axes.splice(idx, 1);
+        var maxIdx = axes.length - 1;
+        (this.state.series || []).forEach(function (s) {
+            if ((s.yAxisIndex || 0) >= idx) {
+                s.yAxisIndex = Math.max(0, (s.yAxisIndex || 0) - 1);
+                if (s.yAxisIndex > maxIdx) s.yAxisIndex = 0;
+                if (s.yAxisIndex === 0) delete s.yAxisIndex;
+            }
+        });
+        this._renderAxesUI();
+        this._updateTableEditorYAxisCount();
+        this._serialize();
+        this._schedulePreview();
+    };
+
+    ChartFieldInput.prototype._updateTableEditorYAxisCount = function () {
+        if (this._tableEditor && typeof this._tableEditor.setYAxisCount === 'function') {
+            this._tableEditor.setYAxisCount((this.state.yAxes || [{}]).length);
+        }
     };
 
     // -----------------------------------------------------------------------
@@ -310,12 +467,7 @@
         setVal(r, '[data-cf="title"]',       s.title       || '');
         setVal(r, '[data-cf="subtitle"]',    s.subtitle    || '');
         setVal(r, '[data-cf="xaxis-label"]', s.xAxis.label || '');
-        setVal(r, '[data-cf="yaxis-label"]',  s.yAxis.label  || '');
-        setVal(r, '[data-cf="yaxis-suffix"]', s.yAxis.suffix || '');
-        setVal(r, '[data-cf="value-prefix"]', s.valuePrefix  || '');
-        setVal(r, '[data-cf="value-suffix"]', s.valueSuffix  || '');
-        if (s.yAxis.min !== null) setVal(r, '[data-cf="yaxis-min"]', s.yAxis.min);
-        if (s.yAxis.max !== null) setVal(r, '[data-cf="yaxis-max"]', s.yAxis.max);
+        this._renderAxesUI();
 
         if (this.showAdvanced) {
             setChecked(r, '[data-cf="legend-enabled"]',  s.legend.enabled  !== false);
@@ -446,37 +598,42 @@
         }
         container.innerHTML = '';
 
-        var prefix    = this.state.valuePrefix || '';
-        var suffix    = this.state.valueSuffix || '';
-        var yAxisSuffix = (this.state.yAxis && this.state.yAxis.suffix) || '';
+        var yAxes = this.state.yAxes || [{}];
 
         if (library === 'chartjs') {
             var canvas = document.createElement('canvas');
             canvas.style.height = '400px';
             container.appendChild(canvas);
             if (typeof Chart !== 'undefined') {
-                // Apply formatters — renderHtml() normally injects these via PHP but
-                // the preview receives only buildConfig() output without the JS callbacks.
-                if (prefix || suffix) {
+                var hasChartJsFmt = yAxes.some(function (ax) { return ax.prefix || ax.suffix; });
+                if (hasChartJsFmt) {
+                    var cjsScaleMap = {};
+                    yAxes.forEach(function (ax, i) { cjsScaleMap[i === 0 ? 'y' : 'y' + i] = i; });
+                    var cjsFmtArr = yAxes.map(function (ax) { return { prefix: ax.prefix || '', suffix: ax.suffix || '' }; });
                     config.options = config.options || {};
+                    config.options.scales = config.options.scales || {};
+                    yAxes.forEach(function (ax, i) {
+                        var sid = i === 0 ? 'y' : 'y' + i;
+                        if (ax.prefix || ax.suffix) {
+                            config.options.scales[sid] = config.options.scales[sid] || {};
+                            config.options.scales[sid].ticks = config.options.scales[sid].ticks || {};
+                            (function (p, s) {
+                                config.options.scales[sid].ticks.callback = function (val) { return p + val + s; };
+                            })(ax.prefix || '', ax.suffix || '');
+                        }
+                    });
                     config.options.plugins = config.options.plugins || {};
                     config.options.plugins.tooltip = config.options.plugins.tooltip || {};
                     config.options.plugins.tooltip.callbacks = {
                         label: function (ctx) {
-                            var val = ctx.parsed && ctx.parsed.y !== undefined
-                                ? ctx.parsed.y
-                                : (typeof ctx.parsed === 'number' ? ctx.parsed : ctx.formattedValue);
+                            var aid = ctx.dataset && ctx.dataset.yAxisID ? ctx.dataset.yAxisID : 'y';
+                            var ai  = cjsScaleMap[aid] !== undefined ? cjsScaleMap[aid] : 0;
+                            var f   = cjsFmtArr[ai] || { prefix: '', suffix: '' };
+                            var val = ctx.parsed && ctx.parsed.y !== undefined ? ctx.parsed.y : ctx.formattedValue;
                             var lbl = ctx.dataset ? ctx.dataset.label || '' : '';
-                            return (lbl ? lbl + ': ' : '') + prefix + val + suffix;
+                            return (lbl ? lbl + ': ' : '') + (f.prefix || '') + val + (f.suffix || '');
                         }
                     };
-                }
-                if (yAxisSuffix) {
-                    config.options = config.options || {};
-                    config.options.scales = config.options.scales || {};
-                    config.options.scales.y = config.options.scales.y || {};
-                    config.options.scales.y.ticks = config.options.scales.y.ticks || {};
-                    config.options.scales.y.ticks.callback = function (val) { return val + yAxisSuffix; };
                 }
                 this._previewChart = new Chart(canvas, config);
             }
@@ -493,14 +650,29 @@
             var div2 = document.createElement('div');
             container.appendChild(div2);
             if (typeof ApexCharts !== 'undefined') {
-                // Same fix as Chart.js — apply prefix/suffix formatter client-side.
-                if (prefix || suffix) {
+                var apxSeriesList = this.state.series || [];
+                var hasApxFmt = yAxes.some(function (ax) { return ax.prefix || ax.suffix; });
+                if (hasApxFmt) {
+                    var apxPerSeries = apxSeriesList.map(function (s) {
+                        var ai = s.yAxisIndex || 0;
+                        var ax = yAxes[ai] || yAxes[0] || {};
+                        return { prefix: ax.prefix || '', suffix: ax.suffix || '' };
+                    });
                     config.tooltip = config.tooltip || {};
-                    config.tooltip.y = { formatter: function (val) { return prefix + val + suffix; } };
-                    if (config.yaxis) {
-                        config.yaxis.labels = config.yaxis.labels || {};
-                        config.yaxis.labels.formatter = function (val) { return prefix + val + suffix; };
-                    }
+                    config.tooltip.y = apxPerSeries.map(function (f) {
+                        return { formatter: (function (p, s) { return function (val) { return p + val + s; }; })(f.prefix, f.suffix) };
+                    });
+                    var ya = Array.isArray(config.yaxis) ? config.yaxis : (config.yaxis ? [config.yaxis] : []);
+                    var seenApxAxis = {};
+                    apxSeriesList.forEach(function (s, i) {
+                        var ai = s.yAxisIndex || 0;
+                        var f  = apxPerSeries[i] || { prefix: '', suffix: '' };
+                        if (!seenApxAxis[ai] && ya[i] && !ya[i].seriesName && (f.prefix || f.suffix)) {
+                            seenApxAxis[ai] = true;
+                            ya[i].labels = ya[i].labels || {};
+                            ya[i].labels.formatter = (function (p, sf) { return function (val) { return p + val + sf; }; })(f.prefix, f.suffix);
+                        }
+                    });
                 }
                 this._previewChart = new ApexCharts(div2, config);
                 this._previewChart.render();

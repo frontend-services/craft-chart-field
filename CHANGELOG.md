@@ -1,5 +1,9 @@
 # Chart Field Changelog
 
+## 1.0.5 — 2026-03-27
+
+- Support for multiple Y axes
+
 ## 1.0.4 — 2026-03-25
 
 - Fix Highcharts fullscreen background color

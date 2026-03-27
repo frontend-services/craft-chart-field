@@ -15,7 +15,8 @@ class ChartData extends Model
     public ?string $title = null;
     public ?string $subtitle = null;
     public ?array $xAxis = null;
-    public ?array $yAxis = null;
+    public ?array $yAxis = null;      // legacy — read from old stored data only
+    public ?array $yAxes = null;      // new multi-axis format
     public array $series = [];
     public ?array $legend = null;
     public ?array $colors = null;
@@ -23,11 +24,58 @@ class ChartData extends Model
     public bool $credits = false;
     public bool $responsive = true;
     public bool $stacking = false;
-    public ?string $valuePrefix = null;
-    public ?string $valueSuffix = null;
+    public ?string $valuePrefix = null;  // legacy — read from old stored data only
+    public ?string $valueSuffix = null;  // legacy — read from old stored data only
     public string $inputMode = 'spreadsheet';
 
     private ?ChartField $_field = null;
+
+    /**
+     * Migrates old single-axis format (yAxis + valuePrefix/valueSuffix) into yAxes array.
+     * Also keeps $yAxis pointing to yAxes[0] for backwards-compat Twig template access.
+     * Call this after constructing a model from stored data.
+     */
+    public function normalizeAxes(): void
+    {
+        if (!empty($this->yAxes)) {
+            // Already new format — keep $yAxis pointing to first axis for template compat
+            if ($this->yAxis === null) {
+                $this->yAxis = $this->yAxes[0];
+            }
+            return;
+        }
+
+        // Migrate from old format
+        $old = $this->yAxis ?? [];
+        $this->yAxes = [[
+            'label'  => $old['label']  ?? null,
+            'min'    => $old['min']    ?? null,
+            'max'    => $old['max']    ?? null,
+            'prefix' => $this->valuePrefix ?? null,
+            'suffix' => $this->valueSuffix ?? $old['suffix'] ?? null,
+        ]];
+        // Keep $yAxis pointing to the single axis for backwards-compat template access
+        $this->yAxis = $this->yAxes[0];
+    }
+
+    /**
+     * Returns normalised yAxes array for use by renderers.
+     * Handles both new format ($yAxes set) and old format (single $yAxis).
+     */
+    public function getResolvedYAxes(): array
+    {
+        if (!empty($this->yAxes)) {
+            return array_values($this->yAxes);
+        }
+        $old = $this->yAxis ?? [];
+        return [[
+            'label'  => $old['label']  ?? null,
+            'min'    => $old['min']    ?? null,
+            'max'    => $old['max']    ?? null,
+            'prefix' => $this->valuePrefix ?? null,
+            'suffix' => $this->valueSuffix ?? $old['suffix'] ?? null,
+        ]];
+    }
 
     public function setField(ChartField $field): void
     {
@@ -140,22 +188,21 @@ class ChartData extends Model
      */
     public function serializeToArray(): array
     {
+        // yAxis / valuePrefix / valueSuffix intentionally omitted — replaced by yAxes
         return array_filter([
-            'chartType' => $this->chartType,
-            'title' => $this->title,
-            'subtitle' => $this->subtitle,
-            'xAxis' => $this->xAxis,
-            'yAxis' => $this->yAxis,
-            'series' => $this->series,
-            'legend' => $this->legend,
-            'colors' => $this->colors,
-            'tooltip' => $this->tooltip,
-            'credits' => $this->credits,
+            'chartType'  => $this->chartType,
+            'title'      => $this->title,
+            'subtitle'   => $this->subtitle,
+            'xAxis'      => $this->xAxis,
+            'yAxes'      => $this->getResolvedYAxes(),
+            'series'     => $this->series,
+            'legend'     => $this->legend,
+            'colors'     => $this->colors,
+            'tooltip'    => $this->tooltip,
+            'credits'    => $this->credits,
             'responsive' => $this->responsive,
-            'stacking' => $this->stacking,
-            'valuePrefix' => $this->valuePrefix,
-            'valueSuffix' => $this->valueSuffix,
-            'inputMode' => $this->inputMode,
+            'stacking'   => $this->stacking,
+            'inputMode'  => $this->inputMode,
         ], fn($v) => $v !== null);
     }
 

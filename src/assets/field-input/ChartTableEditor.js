@@ -35,21 +35,24 @@
         this._container = container;
         this._mode      = options.mode || 'cartesian';
         this._palette   = options.defaultPalette || ['#4A90D9','#D94A4A','#50C878','#FFB347','#9B59B6','#1ABC9C','#E67E22','#34495E'];
-        this._allowColors     = options.allowCustomColors !== false;
+        this._allowColors      = options.allowCustomColors !== false;
         this._allowSeriesTypes = options.allowSeriesTypes === true;
         this._comboTypes       = options.comboTypes || ['line', 'column', 'area', 'scatter'];
+        this._yAxisCount       = options.yAxisCount || 1;
         this._onChangeCb  = options.onChange || null;
         this._changeTimer = null;
         this._prevValue   = null; // for Escape revert
 
         // Internal state
-        // _headers:      column header strings (includes 'Category' at [0] for cartesian)
-        // _colors:       aligned with _headers — null for non-series columns
-        // _seriesTypes:  per-series type overrides — '' means "use global chart type"
-        // _rows:         2D array of raw string cell values
+        // _headers:       column header strings (includes 'Category' at [0] for cartesian)
+        // _colors:        aligned with _headers — null for non-series columns
+        // _seriesTypes:   per-series type overrides — '' means "use global chart type"
+        // _yAxisIndices:  per-column axis index (0-based); null for Category column
+        // _rows:          2D array of raw string cell values
         this._headers      = [];
         this._colors       = [];
         this._seriesTypes  = [];
+        this._yAxisIndices = [];
         this._rows         = [];
 
         this._buildDOM();
@@ -217,6 +220,26 @@
                 th.appendChild(typeRow);
             }
 
+            // Per-series Y axis selector (only when multiple axes exist)
+            if (isEditable && self._yAxisCount > 1) {
+                var axisRow = document.createElement('div');
+                axisRow.className = 'cte-th__axis-row';
+
+                var axisSelect = document.createElement('select');
+                axisSelect.className = 'cte-th__axis-select';
+                axisSelect.setAttribute('data-cte-axis-col', j);
+
+                for (var a = 0; a < self._yAxisCount; a++) {
+                    var axOpt = document.createElement('option');
+                    axOpt.value = a;
+                    axOpt.textContent = 'Y' + (a + 1);
+                    axisSelect.appendChild(axOpt);
+                }
+                axisSelect.value = self._yAxisIndices[j] || 0;
+                axisRow.appendChild(axisSelect);
+                th.appendChild(axisRow);
+            }
+
             tr.appendChild(th);
         });
 
@@ -354,6 +377,14 @@
 
         // Change (for color pickers and type selects which fire change, not input)
         this._wrap.addEventListener('change', function (e) {
+            // Axis selector in column header
+            var axisColStr = e.target.getAttribute ? e.target.getAttribute('data-cte-axis-col') : null;
+            if (axisColStr !== null) {
+                self._yAxisIndices[parseInt(axisColStr, 10)] = parseInt(e.target.value, 10);
+                self._scheduleChange();
+                return;
+            }
+
             // Series type select in column header
             var typeColStr = e.target.getAttribute ? e.target.getAttribute('data-cte-type-col') : null;
             if (typeColStr !== null) {
@@ -619,12 +650,13 @@
     };
 
     ChartTableEditor.prototype._addSeriesQuiet = function () {
-        var idx     = this._headers.length - 1; // how many series exist before adding
-        var newName = 'Series ' + (idx + 1);
+        var idx      = this._headers.length - 1; // how many series exist before adding
+        var newName  = 'Series ' + (idx + 1);
         var newColor = this._color(idx);
         this._headers.push(newName);
         this._colors.push(newColor);
         this._seriesTypes.push('');
+        this._yAxisIndices.push(0);
         this._rows.forEach(function (row) { row.push(''); });
     };
 
@@ -635,9 +667,19 @@
         this._headers.splice(colIdx, 1);
         this._colors.splice(colIdx, 1);
         this._seriesTypes.splice(colIdx, 1);
+        this._yAxisIndices.splice(colIdx, 1);
         this._rows.forEach(function (row) { row.splice(colIdx, 1); });
         this._renderAll();
         this._scheduleChange();
+    };
+
+    ChartTableEditor.prototype.setYAxisCount = function (n) {
+        this._yAxisCount = Math.max(1, n);
+        // Clamp any indices that are now out of range
+        this._yAxisIndices = this._yAxisIndices.map(function (idx) {
+            return idx === null ? null : Math.min(idx || 0, n - 1);
+        });
+        this._renderHeader();
     };
 
     // -------------------------------------------------------------------------
@@ -686,6 +728,9 @@
             }, this));
             this._seriesTypes = [null].concat(series.map(function (s) {
                 return s.type || '';
+            }));
+            this._yAxisIndices = [null].concat(series.map(function (s) {
+                return typeof s.yAxisIndex === 'number' ? s.yAxisIndex : 0;
             }));
 
             if (this._headers.length === 1) {
@@ -773,6 +818,8 @@
                     var seriesType = self._seriesTypes[colIdx] || '';
                     if (seriesType) entry.type = seriesType;
                 }
+                var yAxisIdx = self._yAxisIndices[colIdx] || 0;
+                if (yAxisIdx > 0) entry.yAxisIndex = yAxisIdx;
                 return entry;
             }),
         };
